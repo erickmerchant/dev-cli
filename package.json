@@ -20,11 +20,18 @@
   "homepage": "https://github.com/erickmerchant/dev-cli#readme",
   "devDependencies": {
     "execa": "^1.0.0",
+    "get-port": "^4.0.0",
+    "got": "^9.3.2",
     "standard": "^12.0.1",
     "tape": "^4.9.1"
   },
   "dependencies": {
+    "@babel/core": "^7.1.6",
     "chalk": "^2.4.1",
-    "sergeant": "^22.2.1"
+    "polka": "^0.5.1",
+    "postcss": "^7.0.5",
+    "sergeant": "^22.2.1",
+    "sirv": "^0.2.2",
+    "style-resolve": "^1.1.0"
   }
 }
