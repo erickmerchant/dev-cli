@@ -1,0 +1,30 @@
+{
+  "name": "@erickmerchant/dev-cli",
+  "version": "1.0.0",
+  "description": "serve modules while developing and then bundle to deploy",
+  "bin": {
+    "dev": "./cli.js"
+  },
+  "scripts": {
+    "test": "standard && tape test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erickmerchant/dev-cli.git"
+  },
+  "author": "Erick Merchant <erickmerchant@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/erickmerchant/dev-cli/issues"
+  },
+  "homepage": "https://github.com/erickmerchant/dev-cli#readme",
+  "devDependencies": {
+    "execa": "^1.0.0",
+    "standard": "^12.0.1",
+    "tape": "^4.9.1"
+  },
+  "dependencies": {
+    "chalk": "^2.4.1",
+    "sergeant": "^22.2.1"
+  }
+}
