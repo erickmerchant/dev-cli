@@ -15,7 +15,6 @@ command('dev', ({ command }) => {
 
     option('port', {
       description: 'the port to listen at',
-      required: true,
       type (val = 3000) {
         return val ? Number(val) : null
       }
