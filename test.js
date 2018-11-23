@@ -12,12 +12,12 @@ const noopDeps = {
   out
 }
 
-test('index.js - good response', async (t) => {
+test('serve.js - good response', async (t) => {
   t.plan(4)
 
   const port = await getPort()
 
-  require('./index')(noopDeps)({ port, directory: './fixtures/' }, async (err, app) => {
+  require('./serve')(noopDeps)({ port, directory: './fixtures/' }, async (err, app) => {
     t.error(err)
 
     try {
@@ -36,7 +36,7 @@ test('index.js - good response', async (t) => {
   })
 })
 
-test('index.js - output', async (t) => {
+test('serve.js - output', async (t) => {
   t.plan(2)
 
   const out = new stream.Writable()
@@ -50,7 +50,7 @@ test('index.js - output', async (t) => {
 
   const port = await getPort()
 
-  require('./index')({
+  require('./serve')({
     out
   })({ port, directory: './fixtures/' }, async (err, app) => {
     t.error(err)

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const command = require('sergeant')
-const serve = require('./index')
+const serve = require('./serve.js')
 const out = process.stdout
 
 command('dev', ({ command }) => {
