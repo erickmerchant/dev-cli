@@ -50,7 +50,7 @@ module.exports = (deps) => {
           const result = await babelTransform(code, {
             sourceType: 'module',
             sourceMaps: 'inline',
-            sourceFileName: req.path,
+            sourceFileName: file,
             presets: [
               [babelPresetEnv, { modules: false }],
               babelMinify
@@ -114,7 +114,7 @@ module.exports = (deps) => {
             postcssPresetEnv(),
             postcssMinify()
           ]).process(code, {
-            from: req.path,
+            from: file,
             map: { inline: true }
           })
 
