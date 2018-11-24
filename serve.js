@@ -169,7 +169,9 @@ function onError (err, req, res) {
 }
 
 function getImportPath (source, directory, ext) {
-  const result = path.relative(path.resolve(directory), resolve.sync(source))
+  const resolved = resolve.sync(source, { browser: 'module' }) || resolve.sync(source)
+
+  const result = path.relative(path.resolve(directory), resolved)
   const preExisting = Object.keys(moduleMap).find((id) => moduleMap[id] === result)
 
   if (preExisting) {
