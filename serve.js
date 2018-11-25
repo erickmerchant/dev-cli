@@ -18,7 +18,6 @@ const readFile = promisify(fs.readFile)
 const babelTransform = promisify(babel.transform)
 const createReadStream = fs.createReadStream
 const moduleMap = {}
-let moduleId = 0
 
 module.exports = (deps) => {
   assert.ok(deps.out)
@@ -31,7 +30,7 @@ module.exports = (deps) => {
     })
 
     app.use(async (req, res, next) => {
-      if (req.path.endsWith('.mjs')) {
+      if (req.path.endsWith('.mjs') || req.path.endsWith('.js')) {
         try {
           res.writeHead(200, { 'content-type': 'application/javascript' })
 
@@ -50,7 +49,7 @@ module.exports = (deps) => {
           const result = await babelTransform(code, {
             sourceType: 'module',
             sourceMaps: 'inline',
-            sourceFileName: file,
+            sourceFileName: req.path,
             presets: [
               [babelPresetEnv, { modules: false }],
               babelMinify
@@ -70,7 +69,7 @@ module.exports = (deps) => {
                     }
 
                     if (!source.value.startsWith('.') && !source.value.startsWith('/')) {
-                      source.value = getImportPath(source.value, args.directory, 'mjs')
+                      source.value = getImportPath(source.value, args.directory)
                     }
                   },
                   'ImportDeclaration|ExportNamedDeclaration|ExportAllDeclaration' (path) {
@@ -82,7 +81,7 @@ module.exports = (deps) => {
                     }
 
                     if (!source.value.startsWith('.') && !source.value.startsWith('/')) {
-                      source.value = getImportPath(source.value, args.directory, 'mjs')
+                      source.value = getImportPath(source.value, args.directory)
                     }
                   }
                 }
@@ -104,7 +103,13 @@ module.exports = (deps) => {
         try {
           res.writeHead(200, { 'content-type': 'text/css' })
 
-          const file = path.join(args.directory, req.path)
+          let file
+
+          if (moduleMap[req.path] != null) {
+            file = path.join(args.directory, moduleMap[req.path])
+          } else {
+            file = path.join(args.directory, req.path)
+          }
 
           await access(file, fs.constants.R_OK)
 
@@ -112,9 +117,16 @@ module.exports = (deps) => {
 
           const result = await postcss([
             postcssPresetEnv(),
-            postcssMinify()
+            postcssMinify(),
+            (root, result) => {
+              root.walkAtRules(rule => {
+                if (rule.name === 'import') {
+                  console.log(rule)
+                }
+              })
+            }
           ]).process(code, {
-            from: file,
+            from: req.path,
             map: { inline: true }
           })
 
@@ -168,7 +180,7 @@ function onError (err, req, res) {
   res.end('')
 }
 
-function getImportPath (source, directory, ext) {
+function getImportPath (source, directory) {
   const resolved = resolve.sync(source, { browser: 'module' }) || resolve.sync(source)
 
   const result = path.relative(path.resolve(directory), resolved)
@@ -178,7 +190,13 @@ function getImportPath (source, directory, ext) {
     return preExisting
   }
 
-  const id = `/m/${moduleId++}.${ext}`
+  let id = result
+
+  while (id.startsWith('.') || id.startsWith('/')) {
+    id = id.substring(1)
+  }
+
+  id = `/${id}`
 
   moduleMap[id] = result
 
