@@ -20,6 +20,10 @@ command('dev', ({ command }) => {
       }
     })
 
+    option('dev', {
+      description: 'run in dev mode'
+    })
+
     return (args) => serve({ out })(args)
   })
 })(process.argv.slice(2))
