@@ -12,6 +12,7 @@ const babelPresetEnv = require('@babel/preset-env')
 const babelMinify = require('babel-preset-minify')
 const postcssMinify = require('cssnano')
 const postcss = require('postcss')
+const valueParser = require('postcss-value-parser')
 const postcssPresetEnv = require('postcss-preset-env')
 const access = promisify(fs.access)
 const readFile = promisify(fs.readFile)
@@ -68,8 +69,10 @@ module.exports = (deps) => {
                       return
                     }
 
-                    if (!source.value.startsWith('.') && !source.value.startsWith('/')) {
-                      source.value = getImportPath(source.value, args.directory)
+                    const value = source.value
+
+                    if (!value.startsWith('.') && !value.startsWith('/')) {
+                      source.value = getImportPath(resolve.sync(value, { browser: 'module' }) || resolve.sync(value), args.directory)
                     }
                   },
                   'ImportDeclaration|ExportNamedDeclaration|ExportAllDeclaration' (path) {
@@ -80,8 +83,10 @@ module.exports = (deps) => {
                       return
                     }
 
-                    if (!source.value.startsWith('.') && !source.value.startsWith('/')) {
-                      source.value = getImportPath(source.value, args.directory)
+                    const value = source.value
+
+                    if (!value.startsWith('.') && !value.startsWith('/')) {
+                      source.value = getImportPath(resolve.sync(value, { browser: 'module' }) || resolve.sync(value), args.directory)
                     }
                   }
                 }
@@ -119,9 +124,21 @@ module.exports = (deps) => {
             postcssPresetEnv(),
             postcssMinify(),
             (root, result) => {
-              root.walkAtRules(rule => {
+              root.walkAtRules((rule, b) => {
                 if (rule.name === 'import') {
-                  console.log(rule)
+                  const parsed = valueParser(rule.params)
+
+                  const value = parsed.nodes[0].value
+
+                  if (!value.startsWith('.') && !value.startsWith('/')) {
+                    let resolved = resolve.sync(value, { browser: 'style' }) || resolve.sync(value)
+
+                    if (resolved.endsWith('.css')) {
+                      parsed.nodes[0].value = getImportPath(resolved, args.directory)
+
+                      rule.params = String(parsed)
+                    }
+                  }
                 }
               })
             }
@@ -180,9 +197,7 @@ function onError (err, req, res) {
   res.end('')
 }
 
-function getImportPath (source, directory) {
-  const resolved = resolve.sync(source, { browser: 'module' }) || resolve.sync(source)
-
+function getImportPath (resolved, directory) {
   const result = path.relative(path.resolve(directory), resolved)
   const preExisting = Object.keys(moduleMap).find((id) => moduleMap[id] === result)
 
