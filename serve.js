@@ -112,7 +112,7 @@ module.exports = (deps) => {
                 const value = parsed.nodes[0].value
 
                 if (!value.startsWith('.') && !value.startsWith('/')) {
-                  let resolved = resolve.sync(value, { browser: 'style' }) || resolve.sync(value)
+                  const resolved = resolve.sync(value, { browser: 'style' }) || resolve.sync(value)
 
                   if (resolved.endsWith('.css')) {
                     parsed.nodes[0].value = getImportPath(resolved, args.directory)
