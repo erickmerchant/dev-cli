@@ -6,9 +6,16 @@ const out = process.stdout
 
 command('dev', ({ command }) => {
   command('serve', ({ option, parameter }) => {
-    parameter('directory', {
-      description: 'the directory to serve files from',
-      type (val = '.') {
+    parameter('src', {
+      description: 'where to serve files from',
+      type (val = './src/') {
+        return val
+      }
+    })
+
+    parameter('dist', {
+      description: 'where to cache files in',
+      type (val = './dist/') {
         return val
       }
     })

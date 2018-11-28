@@ -2,8 +2,6 @@ const polka = require('polka')
 const sirv = require('sirv')
 const compression = require('compression')
 const chalk = require('chalk')
-const revHash = require('rev-hash')
-const findCacheDir = require('find-cache-dir')
 const path = require('path')
 const assert = require('assert')
 const error = require('sergeant/error')
@@ -19,12 +17,11 @@ const postcss = require('postcss')
 const valueParser = require('postcss-value-parser')
 const postcssPresetEnv = require('postcss-preset-env')
 const access = promisify(fs.access)
-const readFile = promisify(fs.readFile)
-const writeFile = promisify(fs.writeFile)
+// const readFile = promisify(fs.readFile)
+// const writeFile = promisify(fs.writeFile)
 const babelTransform = promisify(babel.transform)
 const createReadStream = fs.createReadStream
 const moduleMap = {}
-const getCachePath = findCacheDir({ name: '@erickmerchant/dev-cli', thunk: true, create: true })
 
 module.exports = (deps) => {
   assert.ok(deps.out)
@@ -32,7 +29,7 @@ module.exports = (deps) => {
   assert.strictEqual(typeof deps.out.write, 'function')
 
   return async (args, cb = () => {}) => {
-    await del(getCachePath('*'))
+    await del(args.dist)
 
     const app = polka({
       onError
@@ -41,7 +38,8 @@ module.exports = (deps) => {
     app.use(compression())
 
     app.use(getAssetMiddleware({
-      directory: args.directory,
+      src: args.src,
+      dist: args.dist,
       extensions: ['.mjs', '.js'],
       contentType: 'application/javascript',
       async transform (req, code) {
@@ -70,7 +68,7 @@ module.exports = (deps) => {
                   const value = source.value
 
                   if (!value.startsWith('.') && !value.startsWith('/')) {
-                    source.value = getImportPath(resolve.sync(value, { browser: 'module' }) || resolve.sync(value), args.directory)
+                    source.value = getImportPath(resolve.sync(value, { browser: 'module' }) || resolve.sync(value), args.src)
                   }
                 },
                 'ImportDeclaration|ExportNamedDeclaration|ExportAllDeclaration' (path) {
@@ -84,7 +82,7 @@ module.exports = (deps) => {
                   const value = source.value
 
                   if (!value.startsWith('.') && !value.startsWith('/')) {
-                    source.value = getImportPath(resolve.sync(value, { browser: 'module' }) || resolve.sync(value), args.directory)
+                    source.value = getImportPath(resolve.sync(value, { browser: 'module' }) || resolve.sync(value), args.src)
                   }
                 }
               }
@@ -97,7 +95,8 @@ module.exports = (deps) => {
     }))
 
     app.use(getAssetMiddleware({
-      directory: args.directory,
+      src: args.src,
+      dist: args.dist,
       extensions: ['.css'],
       contentType: 'text/css',
       async transform (req, code) {
@@ -115,7 +114,7 @@ module.exports = (deps) => {
                   const resolved = resolve.sync(value, { browser: 'style' }) || resolve.sync(value)
 
                   if (resolved.endsWith('.css')) {
-                    parsed.nodes[0].value = getImportPath(resolved, args.directory)
+                    parsed.nodes[0].value = getImportPath(resolved, args.src)
 
                     rule.params = String(parsed)
                   }
@@ -132,14 +131,14 @@ module.exports = (deps) => {
       }
     }))
 
-    app.use(sirv(args.directory, {
+    app.use(sirv(args.src, {
       etag: true,
       dev: args.dev
     }))
 
     app.use(async (req, res, next) => {
       try {
-        const file = path.join(args.directory, 'index.html')
+        const file = path.join(args.src, 'index.html')
 
         await access(file, fs.constants.R_OK)
 
@@ -173,7 +172,7 @@ function onError (err, req, res) {
   res.end('')
 }
 
-function getAssetMiddleware ({ directory, extensions, contentType, transform }) {
+function getAssetMiddleware ({ src, dist, extensions, contentType, transform }) {
   return async (req, res, next) => {
     if (extensions.includes(path.extname(req.path))) {
       try {
@@ -182,24 +181,24 @@ function getAssetMiddleware ({ directory, extensions, contentType, transform }) 
         let file
 
         if (moduleMap[req.path] != null) {
-          file = path.join(directory, moduleMap[req.path])
+          file = path.join(src, moduleMap[req.path])
         } else {
-          file = path.join(directory, req.path)
+          file = path.join(src, req.path)
         }
 
         await access(file, fs.constants.R_OK)
 
-        const code = await readFile(file, 'utf8')
-        const cachePath = getCachePath(revHash(code))
+        // const code = await readFile(file, 'utf8')
+        // const cachePath = getCachePath(revHash(code))
         let result
 
-        if (!fs.existsSync(cachePath)) {
-          result = await transform(req, code)
+        // if (!fs.existsSync(cachePath)) {
+        //   result = await transform(req, code)
 
-          await writeFile(cachePath, result)
-        } else {
-          result = await readFile(cachePath, 'utf8')
-        }
+        //   await writeFile(cachePath, result)
+        // } else {
+        //   result = await readFile(cachePath, 'utf8')
+        // }
 
         res.end(result)
       } catch (err) {
