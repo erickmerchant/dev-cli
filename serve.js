@@ -7,7 +7,6 @@ const assert = require('assert')
 const error = require('sergeant/error')
 const promisify = require('util').promisify
 const fs = require('fs')
-const revHash = require('rev-hash')
 const resolve = require('browser-resolve')
 const babel = require('@babel/core')
 const babelPresetEnv = require('@babel/preset-env')
@@ -36,7 +35,7 @@ module.exports = (deps) => {
     app.use(getAssetMiddleware({
       src: args.src,
       extensions: ['.mjs', '.js'],
-      contentType: 'application/javascript',
+      contentType: 'text/javascript',
       async transform (req, code) {
         const result = await babelTransform(code, {
           sourceType: 'module',
@@ -167,7 +166,8 @@ module.exports = (deps) => {
 
           if (fs.existsSync(file)) {
             const code = await readFile(file, 'utf8')
-            const etag = 'W/' + revHash(code)
+            const stats = fs.statSync(file)
+            const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
 
             if (req.headers['if-none-match'] !== etag) {
               let result
