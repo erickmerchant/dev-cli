@@ -6,8 +6,8 @@ const path = require('path')
 const assert = require('assert')
 const error = require('sergeant/error')
 const promisify = require('util').promisify
-const del = require('del')
 const fs = require('fs')
+const revHash = require('rev-hash')
 const resolve = require('browser-resolve')
 const babel = require('@babel/core')
 const babelPresetEnv = require('@babel/preset-env')
@@ -16,12 +16,11 @@ const cssnano = require('cssnano')
 const postcss = require('postcss')
 const valueParser = require('postcss-value-parser')
 const postcssPresetEnv = require('postcss-preset-env')
-const access = promisify(fs.access)
-// const readFile = promisify(fs.readFile)
-// const writeFile = promisify(fs.writeFile)
+const readFile = promisify(fs.readFile)
 const babelTransform = promisify(babel.transform)
 const createReadStream = fs.createReadStream
-const moduleMap = {}
+const modules = {}
+const transformed = {}
 
 module.exports = (deps) => {
   assert.ok(deps.out)
@@ -29,8 +28,6 @@ module.exports = (deps) => {
   assert.strictEqual(typeof deps.out.write, 'function')
 
   return async (args, cb = () => {}) => {
-    await del(args.dist)
-
     const app = polka({
       onError
     })
@@ -39,7 +36,6 @@ module.exports = (deps) => {
 
     app.use(getAssetMiddleware({
       src: args.src,
-      dist: args.dist,
       extensions: ['.mjs', '.js'],
       contentType: 'application/javascript',
       async transform (req, code) {
@@ -61,7 +57,6 @@ module.exports = (deps) => {
 
                   const [source] = path.node.arguments
                   if (source.type !== 'StringLiteral') {
-                    /* Should never happen */
                     return
                   }
 
@@ -74,7 +69,6 @@ module.exports = (deps) => {
                 'ImportDeclaration|ExportNamedDeclaration|ExportAllDeclaration' (path) {
                   const { source } = path.node
 
-                  // An export without a 'from' clause
                   if (source === null) {
                     return
                   }
@@ -96,7 +90,6 @@ module.exports = (deps) => {
 
     app.use(getAssetMiddleware({
       src: args.src,
-      dist: args.dist,
       extensions: ['.css'],
       contentType: 'text/css',
       async transform (req, code) {
@@ -137,16 +130,16 @@ module.exports = (deps) => {
     }))
 
     app.use(async (req, res, next) => {
-      try {
-        const file = path.join(args.src, 'index.html')
+      const file = path.join(args.src, 'index.html')
 
-        await access(file, fs.constants.R_OK)
-
+      if (fs.existsSync(file)) {
         res.writeHead(200, { 'content-type': 'text/html' })
 
         createReadStream(file, 'utf8').pipe(res)
-      } catch (err) {
-        onError(err, req, res)
+      } else {
+        res.statusCode = 404
+
+        res.end('')
       }
     })
 
@@ -162,60 +155,70 @@ module.exports = (deps) => {
       }
     })
   }
+
+  function getAssetMiddleware ({ src, extensions, contentType, transform }) {
+    return async (req, res, next) => {
+      if (extensions.includes(path.extname(req.path))) {
+        try {
+          let file
+
+          if (modules[req.path] != null) {
+            file = path.join(src, modules[req.path])
+          } else {
+            file = path.join(src, req.path)
+          }
+
+          if (fs.existsSync(file)) {
+            const code = await readFile(file, 'utf8')
+            const etag = 'W/' + revHash(code)
+
+            if (req.headers['if-none-match'] !== etag || !transformed[file]) {
+              let result
+
+              result = await transform(req, code)
+
+              transformed[file] = true
+
+              res.writeHead(200, {
+                etag,
+                'content-type': contentType
+              })
+
+              res.end(result)
+            } else {
+              res.statusCode = 304
+
+              res.end('')
+            }
+          } else {
+            res.statusCode = 404
+
+            res.end('')
+          }
+        } catch (err) {
+          onError(err, req, res)
+        }
+      } else {
+        next()
+      }
+    }
+  }
 }
 
 function onError (err, req, res) {
   error(err)
 
-  res.writeHead(500, { 'content-type': 'text/plain' })
+  res.statusCode = 500
 
   res.end('')
 }
 
-function getAssetMiddleware ({ src, dist, extensions, contentType, transform }) {
-  return async (req, res, next) => {
-    if (extensions.includes(path.extname(req.path))) {
-      try {
-        res.writeHead(200, { 'content-type': contentType })
-
-        let file
-
-        if (moduleMap[req.path] != null) {
-          file = path.join(src, moduleMap[req.path])
-        } else {
-          file = path.join(src, req.path)
-        }
-
-        await access(file, fs.constants.R_OK)
-
-        // const code = await readFile(file, 'utf8')
-        // const cachePath = getCachePath(revHash(code))
-        let result
-
-        // if (!fs.existsSync(cachePath)) {
-        //   result = await transform(req, code)
-
-        //   await writeFile(cachePath, result)
-        // } else {
-        //   result = await readFile(cachePath, 'utf8')
-        // }
-
-        res.end(result)
-      } catch (err) {
-        onError(err, req, res)
-      }
-    } else {
-      next()
-    }
-  }
-}
-
 function getImportPath (resolved, directory) {
   const result = path.relative(path.resolve(directory), resolved)
-  const preExisting = Object.keys(moduleMap).find((id) => moduleMap[id] === result)
+  const existing = Object.keys(modules).find((id) => modules[id] === result)
 
-  if (preExisting) {
-    return preExisting
+  if (existing) {
+    return existing
   }
 
   let id = result
@@ -226,7 +229,7 @@ function getImportPath (resolved, directory) {
 
   id = `/${id}`
 
-  moduleMap[id] = result
+  modules[id] = result
 
   return id
 }

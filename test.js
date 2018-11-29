@@ -17,7 +17,7 @@ test('serve.js - good response', async (t) => {
 
   const port = await getPort()
 
-  require('./serve')(noopDeps)({ port, directory: './fixtures/' }, async (err, app) => {
+  require('./serve')(noopDeps)({ port, src: './fixtures/' }, async (err, app) => {
     t.error(err)
 
     try {
@@ -52,7 +52,7 @@ test('serve.js - output', async (t) => {
 
   require('./serve')({
     out
-  })({ port, directory: './fixtures/' }, async (err, app) => {
+  })({ port, src: './fixtures/' }, async (err, app) => {
     t.error(err)
 
     try {

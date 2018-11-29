@@ -13,13 +13,6 @@ command('dev', ({ command }) => {
       }
     })
 
-    parameter('dist', {
-      description: 'where to cache files in',
-      type (val = './dist/') {
-        return val
-      }
-    })
-
     option('port', {
       description: 'the port to listen at',
       type (val = 3000) {
@@ -31,6 +24,8 @@ command('dev', ({ command }) => {
       description: 'run in dev mode'
     })
 
-    return (args) => serve({ out })(args)
+    return (args) => serve({
+      out
+    })(args)
   })
 })(process.argv.slice(2))
