@@ -27,7 +27,13 @@ module.exports = (deps) => {
 
   return async (args, cb = () => {}) => {
     const app = polka({
-      onError
+      onError (err, req, res) {
+        error(err)
+
+        res.statusCode = 500
+
+        res.end('')
+      }
     })
 
     app.use(compression())
@@ -156,8 +162,8 @@ module.exports = (deps) => {
 
   function getAssetMiddleware ({ src, extensions, contentType, transform }) {
     return async (req, res, next) => {
-      if (extensions.includes(path.extname(req.path))) {
-        try {
+      try {
+        if (extensions.includes(path.extname(req.path))) {
           let file = path.join(cwd, src, req.path)
 
           if (!fs.existsSync(file)) {
@@ -190,22 +196,14 @@ module.exports = (deps) => {
 
             res.end('')
           }
-        } catch (err) {
-          onError(err, req, res)
+        } else {
+          next()
         }
-      } else {
-        next()
+      } catch (err) {
+        next(err)
       }
     }
   }
-}
-
-function onError (err, req, res) {
-  error(err)
-
-  res.statusCode = 500
-
-  res.end('')
 }
 
 function getImportPath (resolved, directory) {
