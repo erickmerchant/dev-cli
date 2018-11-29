@@ -19,8 +19,7 @@ const postcssPresetEnv = require('postcss-preset-env')
 const readFile = promisify(fs.readFile)
 const babelTransform = promisify(babel.transform)
 const createReadStream = fs.createReadStream
-const modules = {}
-const transformed = {}
+const cwd = process.cwd()
 
 module.exports = (deps) => {
   assert.ok(deps.out)
@@ -130,7 +129,7 @@ module.exports = (deps) => {
     }))
 
     app.use(async (req, res, next) => {
-      const file = path.join(args.src, 'index.html')
+      const file = path.join(cwd, args.src, 'index.html')
 
       if (fs.existsSync(file)) {
         res.writeHead(200, { 'content-type': 'text/html' })
@@ -160,24 +159,20 @@ module.exports = (deps) => {
     return async (req, res, next) => {
       if (extensions.includes(path.extname(req.path))) {
         try {
-          let file
+          let file = path.join(cwd, src, req.path)
 
-          if (modules[req.path] != null) {
-            file = path.join(src, modules[req.path])
-          } else {
-            file = path.join(src, req.path)
+          if (!fs.existsSync(file)) {
+            file = path.join(cwd, req.path)
           }
 
           if (fs.existsSync(file)) {
             const code = await readFile(file, 'utf8')
             const etag = 'W/' + revHash(code)
 
-            if (req.headers['if-none-match'] !== etag || !transformed[file]) {
+            if (req.headers['if-none-match'] !== etag) {
               let result
 
               result = await transform(req, code)
-
-              transformed[file] = true
 
               res.writeHead(200, {
                 etag,
@@ -214,22 +209,15 @@ function onError (err, req, res) {
 }
 
 function getImportPath (resolved, directory) {
-  const result = path.relative(path.resolve(directory), resolved)
-  const existing = Object.keys(modules).find((id) => modules[id] === result)
+  let result = resolved
 
-  if (existing) {
-    return existing
+  directory = path.join(cwd, directory)
+
+  if (result.startsWith(directory)) {
+    result = result.substring(directory.length)
+  } else if (result.startsWith(cwd)) {
+    result = result.substring(cwd.length)
   }
 
-  let id = result
-
-  while (id.startsWith('.') || id.startsWith('/')) {
-    id = id.substring(1)
-  }
-
-  id = `/${id}`
-
-  modules[id] = result
-
-  return id
+  return result
 }
