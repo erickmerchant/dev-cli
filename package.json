@@ -21,7 +21,6 @@
   "devDependencies": {
     "execa": "^1.0.0",
     "get-port": "^4.0.0",
-    "got": "^9.3.2",
     "standard": "^12.0.1",
     "tape": "^4.9.1"
   },
@@ -33,6 +32,7 @@
     "chalk": "^2.4.1",
     "compression": "^1.7.3",
     "cssnano": "^4.1.7",
+    "got": "^9.3.2",
     "polka": "^0.5.1",
     "postcss": "^7.0.6",
     "postcss-preset-env": "^6.4.0",

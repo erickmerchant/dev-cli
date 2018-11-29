@@ -25,7 +25,7 @@ module.exports = (deps) => {
 
   assert.strictEqual(typeof deps.out.write, 'function')
 
-  return async (args, cb = () => {}) => {
+  return (args, cb = () => {}) => {
     const app = polka({
       onError (err, req, res) {
         error(err)
