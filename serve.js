@@ -3,6 +3,7 @@ const sirv = require('sirv')
 const compression = require('compression')
 const chalk = require('chalk')
 const path = require('path')
+const getStream = require('get-stream')
 const assert = require('assert')
 const error = require('sergeant/error')
 const promisify = require('util').promisify
@@ -15,7 +16,6 @@ const cssnano = require('cssnano')
 const postcss = require('postcss')
 const valueParser = require('postcss-value-parser')
 const postcssPresetEnv = require('postcss-preset-env')
-const readFile = promisify(fs.readFile)
 const babelTransform = promisify(babel.transform)
 const createReadStream = fs.createReadStream
 const cwd = process.cwd()
@@ -25,7 +25,7 @@ module.exports = (deps) => {
 
   assert.strictEqual(typeof deps.out.write, 'function')
 
-  return (args, cb = () => {}) => {
+  return (args) => {
     const app = polka({
       onError (err, req, res) {
         error(err)
@@ -150,12 +150,8 @@ module.exports = (deps) => {
     app.listen(args.port, (err) => {
       if (err) {
         error(err)
-
-        cb(err)
       } else {
         deps.out.write(`${chalk.gray('[dev]')} server is listening at port ${args.port}\n`)
-
-        cb(null, app)
       }
     })
   }
@@ -165,13 +161,17 @@ module.exports = (deps) => {
       try {
         if (extensions.includes(path.extname(req.path))) {
           let file = path.join(cwd, src, req.path)
+          let exists = fs.existsSync(file)
 
-          if (!fs.existsSync(file)) {
+          if (!exists) {
             file = path.join(cwd, req.path)
+
+            exists = fs.existsSync(file)
           }
 
-          if (fs.existsSync(file)) {
-            const code = await readFile(file, 'utf8')
+          if (exists) {
+            const stream = await createReadStream(file, 'utf8')
+            const code = await getStream(stream)
             const stats = fs.statSync(file)
             const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
 
