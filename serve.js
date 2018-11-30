@@ -19,13 +19,14 @@ const postcssPresetEnv = require('postcss-preset-env')
 const babelTransform = promisify(babel.transform)
 const createReadStream = fs.createReadStream
 const cwd = process.cwd()
+const noop = () => {}
 
 module.exports = (deps) => {
   assert.ok(deps.out)
 
   assert.strictEqual(typeof deps.out.write, 'function')
 
-  return (args) => {
+  return (args, cb = noop) => {
     const app = polka({
       onError (err, req, res) {
         error(err)
@@ -153,6 +154,8 @@ module.exports = (deps) => {
       } else {
         deps.out.write(`${chalk.gray('[dev]')} server is listening at port ${args.port}\n`)
       }
+
+      cb(err, app)
     })
   }
 
