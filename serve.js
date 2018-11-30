@@ -3,7 +3,7 @@ const sirv = require('sirv')
 const compression = require('compression')
 const chalk = require('chalk')
 const path = require('path')
-const getStream = require('get-stream')
+const streamPromise = require('stream-to-promise')
 const assert = require('assert')
 const error = require('sergeant/error')
 const promisify = require('util').promisify
@@ -43,11 +43,11 @@ module.exports = (deps) => {
       src: args.src,
       extensions: ['.mjs', '.js'],
       contentType: 'text/javascript',
-      async transform (req, code) {
+      async transform (from, code) {
         const result = await babelTransform(code, {
           sourceType: 'module',
           sourceMaps: args.dev ? 'inline' : false,
-          sourceFileName: req.path,
+          sourceFileName: from,
           presets: [
             [babelPresetEnv, { modules: false }],
             babelPresetMinify
@@ -97,7 +97,7 @@ module.exports = (deps) => {
       src: args.src,
       extensions: ['.css'],
       contentType: 'text/css',
-      async transform (req, code) {
+      async transform (from, code) {
         const result = await postcss([
           postcssPresetEnv(),
           cssnano({ preset: 'default' }),
@@ -121,7 +121,7 @@ module.exports = (deps) => {
             })
           }
         ]).process(code, {
-          from: req.path,
+          from,
           map: args.dev ? { inline: true } : false
         })
 
@@ -174,14 +174,14 @@ module.exports = (deps) => {
 
           if (exists) {
             const stream = await createReadStream(file, 'utf8')
-            const code = await getStream(stream)
+            const code = await streamPromise(stream)
             const stats = fs.statSync(file)
             const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
 
             if (req.headers['if-none-match'] !== etag) {
               let result
 
-              result = await transform(req, code)
+              result = await transform(req.path, code)
 
               res.writeHead(200, {
                 etag,
