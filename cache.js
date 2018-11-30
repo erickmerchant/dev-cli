@@ -5,8 +5,16 @@ const globby = require('globby')
 const got = require('got')
 const streamPromise = require('stream-to-promise')
 const serve = require('./serve.js')
-const cssDetective = require('detective-postcss')
-const jsDetective = require('detective-es6')
+const detectives = [
+  {
+    extensions: ['.css'],
+    detect: require('detective-postcss')
+  },
+  {
+    extensions: ['.mjs', '.js'],
+    detect: require('detective-es6')
+  }
+]
 const createWriteStream = fs.createWriteStream
 
 module.exports = (deps) => {
@@ -17,13 +25,10 @@ module.exports = (deps) => {
       }
 
       let files = await globby([path.join(args.src, '**/*')])
-      let deps = []
 
       files = files.map((file) => path.relative(args.src, file))
 
       await Promise.all(files.map(cacheFile))
-
-      await Promise.all(deps.map(cacheFile))
 
       app.server.close()
 
@@ -35,26 +40,23 @@ module.exports = (deps) => {
         await makeDir(path.dirname(newPath))
 
         const stream = createWriteStream(newPath)
+        let deps = []
 
-        if (['.mjs', '.js'].includes(path.extname(relative))) {
-          gatherDeps(jsDetective(result.body), relative)
-        }
+        for (const detective of detectives) {
+          if (detective.extensions.includes(path.extname(relative))) {
+            deps = deps.concat(detective.detect(result.body)
+              .map((file) => {
+                if (file.startsWith('/')) return file.substring(1)
 
-        if (['.css'].includes(path.extname(relative))) {
-          gatherDeps(cssDetective(result.body), relative)
+                return path.join(path.dirname(relative), file)
+              })
+              .filter((file) => !files.includes(file)))
+          }
         }
 
         stream.end(result.body)
 
-        await streamPromise(stream)
-      }
-
-      function gatherDeps (detected, relative) {
-        deps = deps.concat(detected.map((file) => {
-          if (file.startsWith('/')) return file.substring(1)
-
-          return path.join(path.dirname(relative), file)
-        }).filter((file) => !deps.includes(file) && !files.includes(path.join(args.src, file))))
+        await Promise.all([streamPromise(stream), ...deps.map(cacheFile)])
       }
     })
   }
