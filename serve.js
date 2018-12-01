@@ -135,16 +135,24 @@ module.exports = (deps) => {
     }))
 
     app.use(async (req, res, next) => {
-      const file = path.join(cwd, args.src, 'index.html')
+      const file = path.join(cwd, args.src, req.path)
 
-      if (fs.existsSync(file)) {
-        res.writeHead(200, { 'content-type': 'text/html' })
+      if (!req.path.startsWith('.') && fs.existsSync(path.join(cwd, args.src, req.path))) {
+        res.writeHead(200, { 'content-type': 'text/plain' })
 
         createReadStream(file, 'utf8').pipe(res)
       } else {
-        res.statusCode = 404
+        const file = path.join(cwd, args.src, 'index.html')
 
-        res.end('')
+        if (fs.existsSync(file)) {
+          res.writeHead(200, { 'content-type': 'text/html' })
+
+          createReadStream(file, 'utf8').pipe(res)
+        } else {
+          res.statusCode = 404
+
+          res.end('')
+        }
       }
     })
 
