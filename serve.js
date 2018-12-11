@@ -55,33 +55,24 @@ module.exports = (deps) => {
           plugins: [
             () => ({
               visitor: {
-                CallExpression (path) {
-                  if (path.node.callee.type !== 'Import') {
-                    return
-                  }
+                CallExpression ({ node }) {
+                  const [source] = node.arguments
 
-                  const [source] = path.node.arguments
-                  if (source.type !== 'StringLiteral') {
-                    return
-                  }
+                  if (node.callee.type === 'Import' && source.type === 'StringLiteral') {
+                    const value = source.value
 
-                  const value = source.value
-
-                  if (!value.startsWith('.') && !value.startsWith('/')) {
-                    source.value = getImportPath(resolve.sync(value, { browser: 'module' }) || resolve.sync(value), args.src)
+                    if (isBare(value)) {
+                      source.value = getImportPath(value, 'module')
+                    }
                   }
                 },
-                'ImportDeclaration|ExportNamedDeclaration|ExportAllDeclaration' (path) {
-                  const { source } = path.node
+                'ImportDeclaration|ExportNamedDeclaration|ExportAllDeclaration' ({ node }) {
+                  if (node.source != null) {
+                    const value = node.source.value
 
-                  if (source === null) {
-                    return
-                  }
-
-                  const value = source.value
-
-                  if (!value.startsWith('.') && !value.startsWith('/')) {
-                    source.value = getImportPath(resolve.sync(value, { browser: 'module' }) || resolve.sync(value), args.src)
+                    if (isBare(value)) {
+                      node.source.value = getImportPath(value, 'module')
+                    }
                   }
                 }
               }
@@ -108,14 +99,10 @@ module.exports = (deps) => {
 
                 const value = parsed.nodes[0].value
 
-                if (!value.startsWith('.') && !value.startsWith('/')) {
-                  const resolved = resolve.sync(value, { browser: 'style' }) || resolve.sync(value)
+                if (isBare(value)) {
+                  parsed.nodes[0].value = getImportPath(value, 'style')
 
-                  if (resolved.endsWith('.css')) {
-                    parsed.nodes[0].value = getImportPath(resolved, args.src)
-
-                    rule.params = String(parsed)
-                  }
+                  rule.params = String(parsed)
                 }
               }
             })
@@ -165,6 +152,23 @@ module.exports = (deps) => {
 
       cb(err, app)
     })
+
+    function getImportPath (value, browser) {
+      const resolved = resolve.sync(value, { browser }) || resolve.sync(value)
+      const directory = path.join(cwd, args.src)
+
+      if (resolved.startsWith(directory)) {
+        return resolved.substring(directory.length)
+      } else if (resolved.startsWith(cwd)) {
+        return resolved.substring(cwd.length)
+      }
+
+      return resolved
+    }
+  }
+
+  function isBare (value) {
+    return !value.startsWith('.') && !value.startsWith('/')
   }
 
   function getAssetMiddleware ({ src, extensions, contentType, transform }) {
@@ -215,18 +219,4 @@ module.exports = (deps) => {
       }
     }
   }
-}
-
-function getImportPath (resolved, directory) {
-  let result = resolved
-
-  directory = path.join(cwd, directory)
-
-  if (result.startsWith(directory)) {
-    result = result.substring(directory.length)
-  } else if (result.startsWith(cwd)) {
-    result = result.substring(cwd.length)
-  }
-
-  return result
 }
