@@ -6,17 +6,9 @@ const path = require('path')
 const streamPromise = require('stream-to-promise')
 const assert = require('assert')
 const error = require('sergeant/error')
-const promisify = require('util').promisify
 const fs = require('fs')
-const resolve = require('browser-resolve')
-const babel = require('@babel/core')
-const babelPresetEnv = require('@babel/preset-env')
-const babelPresetMinify = require('babel-preset-minify')
-const cssnano = require('cssnano')
-const postcss = require('postcss')
-const valueParser = require('postcss-value-parser')
-const postcssPresetEnv = require('postcss-preset-env')
-const babelTransform = promisify(babel.transform)
+const jsAsset = require('./js-asset.js')
+const cssAsset = require('./css-asset.js')
 const createReadStream = fs.createReadStream
 const cwd = process.cwd()
 const noop = () => {}
@@ -39,82 +31,9 @@ module.exports = (deps) => {
 
     app.use(compression())
 
-    app.use(getAssetMiddleware({
-      src: args.src,
-      extensions: ['.mjs', '.js'],
-      contentType: 'text/javascript',
-      async transform (from, code) {
-        const result = await babelTransform(code, {
-          sourceType: 'module',
-          sourceMaps: args.dev ? 'inline' : false,
-          sourceFileName: from,
-          presets: [
-            [babelPresetEnv, { modules: false }],
-            babelPresetMinify
-          ],
-          plugins: [
-            () => ({
-              visitor: {
-                CallExpression ({ node }) {
-                  const [source] = node.arguments
+    app.use(getAssetMiddleware(cssAsset(args)))
 
-                  if (node.callee.type === 'Import' && source.type === 'StringLiteral') {
-                    const value = source.value
-
-                    if (isBare(value)) {
-                      source.value = getImportPath(value, 'module')
-                    }
-                  }
-                },
-                'ImportDeclaration|ExportNamedDeclaration|ExportAllDeclaration' ({ node }) {
-                  if (node.source != null) {
-                    const value = node.source.value
-
-                    if (isBare(value)) {
-                      node.source.value = getImportPath(value, 'module')
-                    }
-                  }
-                }
-              }
-            })
-          ]
-        })
-
-        return result.code
-      }
-    }))
-
-    app.use(getAssetMiddleware({
-      src: args.src,
-      extensions: ['.css'],
-      contentType: 'text/css',
-      async transform (from, code) {
-        const result = await postcss([
-          postcssPresetEnv(),
-          cssnano({ preset: 'default' }),
-          (root, result) => {
-            root.walkAtRules((rule, b) => {
-              if (rule.name === 'import') {
-                const parsed = valueParser(rule.params)
-
-                const value = parsed.nodes[0].value
-
-                if (isBare(value)) {
-                  parsed.nodes[0].value = getImportPath(value, 'style')
-
-                  rule.params = String(parsed)
-                }
-              }
-            })
-          }
-        ]).process(code, {
-          from,
-          map: args.dev ? { inline: true } : false
-        })
-
-        return result.css
-      }
-    }))
+    app.use(getAssetMiddleware(jsAsset(args)))
 
     app.use(sirv(args.src, {
       etag: true,
@@ -152,23 +71,6 @@ module.exports = (deps) => {
 
       cb(err, app)
     })
-
-    function getImportPath (value, browser) {
-      const resolved = resolve.sync(value, { browser }) || resolve.sync(value)
-      const directory = path.join(cwd, args.src)
-
-      if (resolved.startsWith(directory)) {
-        return resolved.substring(directory.length)
-      } else if (resolved.startsWith(cwd)) {
-        return resolved.substring(cwd.length)
-      }
-
-      return resolved
-    }
-  }
-
-  function isBare (value) {
-    return !value.startsWith('.') && !value.startsWith('/')
   }
 
   function getAssetMiddleware ({ src, extensions, contentType, transform }) {
