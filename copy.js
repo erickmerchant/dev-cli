@@ -1,4 +1,5 @@
 const path = require('path')
+const chalk = require('chalk')
 const fs = require('fs')
 const promisify = require('util').promisify
 const makeDir = require('make-dir')
@@ -19,11 +20,17 @@ module.exports = (deps) => {
 
     let files = await globby([path.join(args.src, '**/*')], { dot: true })
 
+    const copied = []
+
     files = files.map((file) => path.relative(args.src, file))
 
     await Promise.all(files.map(cacheFile))
 
     async function cacheFile (relative) {
+      if (copied.includes(relative)) return
+
+      copied.push(relative)
+
       const newPath = path.join(args.dist, relative)
 
       let file = path.join(cwd, args.src, relative)
@@ -50,23 +57,24 @@ module.exports = (deps) => {
       await makeDir(path.dirname(newPath))
 
       const stream = createWriteStream(newPath)
-      let deps = []
+      let dependencies = []
 
       for (const asset of assets) {
         if (asset.extensions.includes(path.extname(relative))) {
-          deps = deps.concat(asset.detect(result)
+          dependencies = dependencies.concat(asset.detect(result)
             .map((file) => {
               if (file.startsWith('/')) return file.substring(1)
 
               return path.join(path.dirname(relative), file)
-            })
-            .filter((file) => !files.includes(file)))
+            }))
         }
       }
 
       stream.end(result)
 
-      await Promise.all([streamPromise(stream), ...deps.map(cacheFile)])
+      await Promise.all([streamPromise(stream).then(() => {
+        deps.out.write(`${chalk.gray('[dev]')} copied ${relative}\n`)
+      }), ...dependencies.map(cacheFile)])
     }
   }
 }
