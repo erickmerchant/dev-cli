@@ -18,54 +18,7 @@ module.exports = (deps) => {
 
   assert.strictEqual(typeof deps.out.write, 'function')
 
-  return (args, cb = noop) => {
-    const app = polka({
-      onError (err, req, res) {
-        error(err)
-
-        res.statusCode = 500
-
-        res.end('')
-      }
-    })
-
-    app.use(compression())
-
-    app.use(getAssetMiddleware(cssAsset(args)))
-
-    app.use(getAssetMiddleware(jsAsset(args)))
-
-    app.use(sirv(args.src, {
-      etag: true,
-      dev: args.dev
-    }))
-
-    app.use(async (req, res, next) => {
-      const file = path.join(cwd, args.src, 'index.html')
-
-      if (fs.existsSync(file)) {
-        res.writeHead(200, { 'content-type': 'text/html' })
-
-        createReadStream(file, 'utf8').pipe(res)
-      } else {
-        res.statusCode = 404
-
-        res.end('')
-      }
-    })
-
-    app.listen(args.port, (err) => {
-      if (err) {
-        error(err)
-      } else {
-        deps.out.write(`${chalk.gray('[dev]')} server is listening at port ${args.port}\n`)
-      }
-
-      cb(err, app)
-    })
-  }
-
-  function getAssetMiddleware ({ src, extensions, contentType, transform }) {
+  const getAssetMiddleware = ({ src, extensions, contentType, transform }) => {
     return async (req, res, next) => {
       try {
         if (extensions.includes(path.extname(req.path))) {
@@ -112,5 +65,52 @@ module.exports = (deps) => {
         next(err)
       }
     }
+  }
+
+  return (args, cb = noop) => {
+    const app = polka({
+      onError (err, req, res) {
+        error(err)
+
+        res.statusCode = 500
+
+        res.end('')
+      }
+    })
+
+    app.use(compression())
+
+    app.use(getAssetMiddleware(cssAsset(args)))
+
+    app.use(getAssetMiddleware(jsAsset(args)))
+
+    app.use(sirv(args.src, {
+      etag: true,
+      dev: args.dev
+    }))
+
+    app.use(async (req, res, next) => {
+      const file = path.join(cwd, args.src, 'index.html')
+
+      if (fs.existsSync(file)) {
+        res.writeHead(200, { 'content-type': 'text/html' })
+
+        createReadStream(file, 'utf8').pipe(res)
+      } else {
+        res.statusCode = 404
+
+        res.end('')
+      }
+    })
+
+    app.listen(args.port, (err) => {
+      if (err) {
+        error(err)
+      } else {
+        deps.out.write(`${chalk.gray('[dev]')} server is listening at port ${args.port}\n`)
+      }
+
+      cb(err, app)
+    })
   }
 }

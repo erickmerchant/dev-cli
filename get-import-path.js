@@ -2,7 +2,7 @@ const resolve = require('browser-resolve')
 
 const isBareImport = require('./is-bare-import.js')
 
-module.exports = function (value, browser, directories) {
+module.exports = (value, browser, directories) => {
   if (!isBareImport(value)) return value
 
   const resolved = resolve.sync(value, { browser }) || resolve.sync(value)

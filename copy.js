@@ -21,12 +21,7 @@ module.exports = (deps) => {
     let files = await globby([path.join(args.src, '**/*')], { dot: true })
 
     const copied = []
-
-    files = files.map((file) => path.relative(args.src, file))
-
-    await Promise.all(files.map(cacheFile))
-
-    async function cacheFile (relative) {
+    const cacheFile = async (relative) => {
       if (copied.includes(relative)) return
 
       copied.push(relative)
@@ -76,5 +71,9 @@ module.exports = (deps) => {
         deps.out.write(`${chalk.gray('[dev]')} copied ${relative}\n`)
       }), ...dependencies.map(cacheFile)])
     }
+
+    files = files.map((file) => path.relative(args.src, file))
+
+    await Promise.all(files.map(cacheFile))
   }
 }
