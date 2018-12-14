@@ -32,7 +32,7 @@ module.exports = (deps) => {
           }
 
           if (exists) {
-            const stream = await createReadStream(file, 'utf8')
+            const stream = await createReadStream(file)
             const code = await streamPromise(stream)
             const stats = fs.statSync(file)
             const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
@@ -95,7 +95,7 @@ module.exports = (deps) => {
       if (fs.existsSync(file)) {
         res.writeHead(200, { 'content-type': 'text/html' })
 
-        createReadStream(file, 'utf8').pipe(res)
+        createReadStream(file).pipe(res)
       } else {
         res.statusCode = 404
 

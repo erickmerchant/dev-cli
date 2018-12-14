@@ -41,7 +41,7 @@ module.exports = (deps) => {
         return
       }
 
-      let result = await readFile(file, 'utf8')
+      let result = await readFile(file)
 
       for (const asset of assets) {
         if (asset.extensions.includes(path.extname(relative))) {
