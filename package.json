@@ -31,7 +31,7 @@
     "browser-resolve": "^1.11.3",
     "chalk": "^2.4.1",
     "compression": "^1.7.3",
-    "cssnano": "^4.1.7",
+    "cssnano": "^4.1.8",
     "detective-es6": "^2.0.0",
     "detective-postcss": "^3.0.0",
     "globby": "^8.0.1",
