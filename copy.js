@@ -1,5 +1,5 @@
 const path = require('path')
-const chalk = require('chalk')
+const kleur = require('kleur')
 const fs = require('fs')
 const promisify = require('util').promisify
 const makeDir = require('make-dir')
@@ -68,7 +68,7 @@ module.exports = (deps) => {
       stream.end(result)
 
       await Promise.all([streamPromise(stream).then(() => {
-        deps.out.write(`${chalk.gray('[dev]')} copied ${relative}\n`)
+        deps.out.write(`${kleur.gray('[dev]')} copied ${relative}\n`)
       }), ...dependencies.map(cacheFile)])
     }
 
