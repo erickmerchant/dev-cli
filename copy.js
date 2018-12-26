@@ -42,12 +42,9 @@ module.exports = (deps) => {
       }
 
       let result = await readFile(file)
+      let asset = assets.find((asset) => asset.extensions.includes(path.extname(relative)))
 
-      for (const asset of assets) {
-        if (asset.extensions.includes(path.extname(relative))) {
-          result = await asset.transform('/' + relative, result)
-        }
-      }
+      result = await asset.transform('/' + relative, result)
 
       await makeDir(path.dirname(newPath))
 
