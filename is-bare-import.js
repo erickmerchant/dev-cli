@@ -1,3 +1,1 @@
-module.exports = (value) => {
-  return !value.startsWith('.') && !value.startsWith('/')
-}
+module.exports = (value) => !value.startsWith('.') && !value.startsWith('/')
