@@ -43,11 +43,9 @@ module.exports = (deps) => async (args) => {
     let result = await readFile(file)
     const asset = assets.find((a) => a.extensions.includes(path.extname(relative)))
 
-    if (asset == null) {
-      return
+    if (asset != null) {
+      result = await asset.transform(`/${ relative }`, result)
     }
-
-    result = await asset.transform(`/${ relative }`, result)
 
     await makeDir(path.dirname(newPath))
 
