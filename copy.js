@@ -41,7 +41,11 @@ module.exports = (deps) => async (args) => {
     }
 
     let result = await readFile(file)
-    const asset = assets.find((asset) => asset.extensions.includes(path.extname(relative)))
+    const asset = assets.find((a) => a.extensions.includes(path.extname(relative)))
+
+    if (asset == null) {
+      return
+    }
 
     result = await asset.transform(`/${ relative }`, result)
 
