@@ -5,8 +5,8 @@ const serve = require('./serve.js')
 const copy = require('./copy.js')
 const out = process.stdout
 
-command('dev', ({ command }) => {
-  command('serve', ({ option, parameter }) => {
+command('dev', ({command}) => {
+  command('serve', ({option, parameter}) => {
     parameter('src', {
       description: 'where to serve files from',
       type (val = './src/') {
@@ -30,7 +30,7 @@ command('dev', ({ command }) => {
     })(args)
   })
 
-  command('copy', ({ option, parameter }) => {
+  command('copy', ({option, parameter}) => {
     parameter('src', {
       description: 'where to copy files from',
       type (val = './src/') {

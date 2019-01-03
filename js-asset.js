@@ -22,20 +22,20 @@ module.exports = (args) => {
         sourceMaps: args.dev ? 'inline' : false,
         sourceFileName: from,
         presets: [
-          [babelPresetEnv, { modules: false }],
+          [babelPresetEnv, {modules: false}],
           babelPresetMinify
         ],
         plugins: [
           () => ({
             visitor: {
-              CallExpression ({ node }) {
+              CallExpression ({node}) {
                 const [source] = node.arguments
 
                 if (node.callee.type === 'Import' && source.type === 'StringLiteral') {
                   source.value = getImportPath(source.value, 'module', directories)
                 }
               },
-              'ImportDeclaration|ExportNamedDeclaration|ExportAllDeclaration' ({ node }) {
+              'ImportDeclaration|ExportNamedDeclaration|ExportAllDeclaration' ({node}) {
                 if (node.source != null) {
                   node.source.value = getImportPath(node.source.value, 'module', directories)
                 }

@@ -18,7 +18,7 @@ module.exports = (args) => {
     async transform (from, code) {
       const result = await postcss([
         postcssPresetEnv(),
-        cssnano({ preset: 'default' }),
+        cssnano({preset: 'default'}),
         (root, result) => {
           root.walkAtRules((rule, b) => {
             if (rule.name === 'import') {
@@ -32,7 +32,7 @@ module.exports = (args) => {
         }
       ]).process(code, {
         from,
-        map: args.dev ? { inline: true } : false
+        map: args.dev ? {inline: true} : false
       })
 
       return result.css

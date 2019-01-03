@@ -18,7 +18,7 @@ module.exports = (deps) => {
 
   assert.strictEqual(typeof deps.out.write, 'function')
 
-  const getAssetMiddleware = ({ src, extensions, contentType, transform }) => async (req, res, next) => {
+  const getAssetMiddleware = ({src, extensions, contentType, transform}) => async (req, res, next) => {
     try {
       if (extensions.includes(path.extname(req.path))) {
         let file = path.join(cwd, src, req.path)
@@ -34,7 +34,7 @@ module.exports = (deps) => {
           const stream = await createReadStream(file)
           const code = await streamPromise(stream)
           const stats = fs.statSync(file)
-          const etag = `W/"${ stats.size.toString(16) }-${ stats.mtime.getTime().toString(16) }"`
+          const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
 
           if (req.headers['if-none-match'] !== etag) {
             const result = await transform(req.path, code)
@@ -89,7 +89,7 @@ module.exports = (deps) => {
       const file = path.join(cwd, args.src, 'index.html')
 
       if (fs.existsSync(file)) {
-        res.writeHead(200, { 'content-type': 'text/html' })
+        res.writeHead(200, {'content-type': 'text/html'})
 
         createReadStream(file).pipe(res)
       } else {
@@ -103,7 +103,7 @@ module.exports = (deps) => {
       if (err) {
         error(err)
       } else {
-        deps.out.write(`${ kleur.gray('[dev]') } server is listening at port ${ args.port }\n`)
+        deps.out.write(`${kleur.gray('[dev]')} server is listening at port ${args.port}\n`)
       }
 
       cb(err, app)

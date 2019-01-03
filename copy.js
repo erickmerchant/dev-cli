@@ -17,7 +17,7 @@ module.exports = (deps) => async (args) => {
     cssAsset(args)
   ]
 
-  let files = await globby([path.join(args.src, '**/*')], { dot: true })
+  let files = await globby([path.join(args.src, '**/*')], {dot: true})
 
   const copied = []
   const cacheFile = async (relative) => {
@@ -44,7 +44,7 @@ module.exports = (deps) => async (args) => {
     const asset = assets.find((a) => a.extensions.includes(path.extname(relative)))
 
     if (asset != null) {
-      result = await asset.transform(`/${ relative }`, result)
+      result = await asset.transform(`/${relative}`, result)
     }
 
     await makeDir(path.dirname(newPath))
@@ -66,7 +66,7 @@ module.exports = (deps) => async (args) => {
     stream.end(result)
 
     await Promise.all([streamPromise(stream).then(() => {
-      deps.out.write(`${ kleur.gray('[dev]') } copied ${ relative }\n`)
+      deps.out.write(`${kleur.gray('[dev]')} copied ${relative}\n`)
     }), ...dependencies.map(cacheFile)])
   }
 

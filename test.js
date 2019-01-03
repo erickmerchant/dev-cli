@@ -17,11 +17,11 @@ test('serve.js - good response', async (t) => {
 
   const port = await getPort()
 
-  require('./serve')(noopDeps)({ port, src: './fixtures/' }, async (err, app) => {
+  require('./serve')(noopDeps)({port, src: './fixtures/'}, async (err, app) => {
     t.error(err)
 
     try {
-      const response = await got(`http://localhost:${ port }/`)
+      const response = await got(`http://localhost:${port}/`)
 
       t.equal(200, response.statusCode)
 
@@ -52,18 +52,18 @@ test('serve.js - output', async (t) => {
 
   require('./serve')({
     out
-  })({ port, src: './fixtures/' }, async (err, app) => {
+  })({port, src: './fixtures/'}, async (err, app) => {
     t.error(err)
 
     try {
-      await got(`http://localhost:${ port }/`)
+      await got(`http://localhost:${port}/`)
     } catch (e) {
       t.error(e)
     }
 
     app.server.close(() => {
       t.deepEqual(output, [
-        `${ kleur.gray('[dev]') } server is listening at port ${ port }\n`
+        `${kleur.gray('[dev]')} server is listening at port ${port}\n`
       ])
     })
   })
