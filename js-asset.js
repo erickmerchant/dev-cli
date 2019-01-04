@@ -26,22 +26,24 @@ module.exports = (args) => {
           babelPresetMinify
         ],
         plugins: [
-          () => ({
-            visitor: {
-              CallExpression ({node}) {
-                const [source] = node.arguments
+          () => {
+            return {
+              visitor: {
+                CallExpression ({node}) {
+                  const [source] = node.arguments
 
-                if (node.callee.type === 'Import' && source.type === 'StringLiteral') {
-                  source.value = getImportPath(source.value, 'module', directories)
-                }
-              },
-              'ImportDeclaration|ExportNamedDeclaration|ExportAllDeclaration' ({node}) {
-                if (node.source != null) {
-                  node.source.value = getImportPath(node.source.value, 'module', directories)
+                  if (node.callee.type === 'Import' && source.type === 'StringLiteral') {
+                    source.value = getImportPath(source.value, 'module', directories)
+                  }
+                },
+                'ImportDeclaration|ExportNamedDeclaration|ExportAllDeclaration' ({node}) {
+                  if (node.source != null) {
+                    node.source.value = getImportPath(node.source.value, 'module', directories)
+                  }
                 }
               }
             }
-          })
+          }
         ]
       })
 
