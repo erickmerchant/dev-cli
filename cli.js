@@ -9,7 +9,8 @@ command('dev', ({command}) => {
   command('serve', ({option, parameter}) => {
     parameter('src', {
       description: 'where to serve files from',
-      type (val = './src/') {
+      required: true,
+      type (val) {
         return val
       }
     })
@@ -33,14 +34,16 @@ command('dev', ({command}) => {
   command('copy', ({option, parameter}) => {
     parameter('src', {
       description: 'where to copy files from',
-      type (val = './src/') {
+      required: true,
+      type (val) {
         return val
       }
     })
 
     parameter('dist', {
       description: 'where to copy files to',
-      type (val = './src/') {
+      required: true,
+      type (val) {
         return val
       }
     })
