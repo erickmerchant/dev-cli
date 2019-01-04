@@ -1,6 +1,6 @@
 {
   "name": "@erickmerchant/dev-cli",
-  "version": "3.3.2",
+  "version": "4.0.0",
   "description": "serve modules while developing and then bundle to deploy",
   "bin": {
     "dev": "./cli.js"
