@@ -6,7 +6,8 @@
     "dev": "./cli.js"
   },
   "scripts": {
-    "test": "lint '**/*.js' && tape test.js"
+    "pretest": "lint '**/*.js'",
+    "test": "tape test.js"
   },
   "repository": {
     "type": "git",
@@ -19,7 +20,7 @@
   },
   "homepage": "https://github.com/erickmerchant/dev-cli#readme",
   "devDependencies": {
-    "@erickmerchant/lint": "^1.5.1",
+    "@erickmerchant/lint": "^1.6.0",
     "execa": "^1.0.0",
     "get-port": "^4.1.0",
     "tape": "^4.9.2"

@@ -65,7 +65,7 @@ module.exports = (deps) => {
 
   return (args, cb = noop) => {
     const app = polka({
-      onError (err, req, res) {
+      onError(err, req, res) {
         error(err)
 
         res.statusCode = 500

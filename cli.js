@@ -10,14 +10,14 @@ command('dev', ({command}) => {
     parameter('src', {
       description: 'where to serve files from',
       required: true,
-      type (val) {
+      type(val) {
         return val
       }
     })
 
     option('port', {
       description: 'the port to listen at',
-      type (val = 3000) {
+      type(val = 3000) {
         return val ? Number(val) : null
       }
     })
@@ -35,7 +35,7 @@ command('dev', ({command}) => {
     parameter('src', {
       description: 'where to copy files from',
       required: true,
-      type (val) {
+      type(val) {
         return val
       }
     })
@@ -43,7 +43,7 @@ command('dev', ({command}) => {
     parameter('dist', {
       description: 'where to copy files to',
       required: true,
-      type (val) {
+      type(val) {
         return val
       }
     })

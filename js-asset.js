@@ -16,7 +16,7 @@ module.exports = (args) => {
     src: args.src,
     extensions: ['.mjs', '.js'],
     contentType: 'text/javascript',
-    async transform (from, code) {
+    async transform(from, code) {
       const result = await babelTransform(code, {
         sourceType: 'module',
         sourceMaps: args.dev ? 'inline' : false,
@@ -29,14 +29,14 @@ module.exports = (args) => {
           () => {
             return {
               visitor: {
-                CallExpression ({node}) {
+                CallExpression({node}) {
                   const [source] = node.arguments
 
                   if (node.callee.type === 'Import' && source.type === 'StringLiteral') {
                     source.value = getImportPath(source.value, 'module', directories)
                   }
                 },
-                'ImportDeclaration|ExportNamedDeclaration|ExportAllDeclaration' ({node}) {
+                'ImportDeclaration|ExportNamedDeclaration|ExportAllDeclaration'({node}) {
                   if (node.source != null) {
                     node.source.value = getImportPath(node.source.value, 'module', directories)
                   }

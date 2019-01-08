@@ -15,7 +15,7 @@ module.exports = (args) => {
     src: args.src,
     extensions: ['.css'],
     contentType: 'text/css',
-    async transform (from, code) {
+    async transform(from, code) {
       const result = await postcss([
         postcssPresetEnv(),
         cssnano({preset: 'default'}),
