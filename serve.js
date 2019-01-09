@@ -1,7 +1,7 @@
 const polka = require('polka')
 const sirv = require('sirv')
 const compression = require('compression')
-const kleur = require('kleur')
+const {gray} = require('kleur')
 const path = require('path')
 const streamPromise = require('stream-to-promise')
 const assert = require('assert')
@@ -103,7 +103,7 @@ module.exports = (deps) => {
       if (err) {
         error(err)
       } else {
-        deps.out.write(`${kleur.gray('[dev]')} server is listening at port ${args.port}\n`)
+        deps.out.write(`${gray('[dev]')} server is listening at port ${args.port}\n`)
       }
 
       cb(err, app)

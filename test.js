@@ -1,6 +1,6 @@
 const test = require('tape')
 const got = require('got')
-const kleur = require('kleur')
+const {gray} = require('kleur')
 const execa = require('execa')
 const getPort = require('get-port')
 const stream = require('stream')
@@ -63,7 +63,7 @@ test('serve.js - output', async (t) => {
 
     app.server.close(() => {
       t.deepEqual(output, [
-        `${kleur.gray('[dev]')} server is listening at port ${port}\n`
+        `${gray('[dev]')} server is listening at port ${port}\n`
       ])
     })
   })
