@@ -19,11 +19,13 @@ command('dev', ({command}) => {
       description: 'the port to listen at',
       type(val = 3000) {
         return val ? Number(val) : null
-      }
+      },
+      alias: 'p'
     })
 
     option('dev', {
-      description: 'run in dev mode'
+      description: 'run in dev mode',
+      alias: 'd'
     })
 
     return (args) => serve({
@@ -49,7 +51,8 @@ command('dev', ({command}) => {
     })
 
     option('dev', {
-      description: 'run in dev mode'
+      description: 'run in dev mode',
+      alias: 'd'
     })
 
     return (args) => copy({

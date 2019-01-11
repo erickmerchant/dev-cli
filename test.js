@@ -77,10 +77,10 @@ test('cli.js serve', async (t) => {
   } catch (e) {
     t.ok(e)
 
-    t.equal(e.stderr.includes('Usage'), true)
+    t.equal(e.stdout.includes('Usage'), true)
 
-    t.equal(e.stderr.includes('Options'), true)
+    t.equal(e.stdout.includes('Options'), true)
 
-    t.equal(e.stderr.includes('Parameters'), true)
+    t.equal(e.stdout.includes('Parameters'), true)
   }
 })
