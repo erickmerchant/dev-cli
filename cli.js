@@ -5,7 +5,7 @@ const serve = require('./serve.js')
 const copy = require('./copy.js')
 const out = process.stdout
 
-command('dev', ({command}) => {
+command('dev', 'run a development server or copy files, automatically running babel and postcss', ({command}) => {
   command('serve', ({option, parameter}) => {
     parameter('src', {
       description: 'where to serve files from',
