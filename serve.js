@@ -7,8 +7,11 @@ const streamPromise = require('stream-to-promise')
 const assert = require('assert')
 const error = require('sergeant/error')
 const fs = require('fs')
+const del = require('del')
+const cacheDir = require('find-cache-dir')({name: 'dev'})
 const jsAsset = require('./js-asset.js')
 const cssAsset = require('./css-asset.js')
+const cacheTransform = require('./cache-transform.js')
 const createReadStream = fs.createReadStream
 const cwd = process.cwd()
 const noop = () => {}
@@ -31,13 +34,13 @@ module.exports = (deps) => {
         }
 
         if (exists) {
-          const stream = await createReadStream(file)
+          const stream = createReadStream(file)
           const code = await streamPromise(stream)
           const stats = fs.statSync(file)
           const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
 
           if (req.headers['if-none-match'] !== etag) {
-            const result = await transform(req.path, code)
+            const result = await cacheTransform(cacheDir, transform)(req.path, code)
 
             res.writeHead(200, {
               etag,
@@ -63,7 +66,9 @@ module.exports = (deps) => {
     }
   }
 
-  return (args, cb = noop) => {
+  return async (args, cb = noop) => {
+    await del([cacheDir])
+
     const app = polka({
       onError(err, req, res) {
         error(err)
