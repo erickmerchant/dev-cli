@@ -1,9 +1,10 @@
 const babel = require('@babel/core')
 const promisify = require('util').promisify
-const babelPresetEnv = require('@babel/preset-env')
-const babelPresetMinify = require('babel-preset-minify')
-const babelTransform = promisify(babel.transform)
+const presetEnv = require('@babel/preset-env')
+const presetMinify = require('babel-preset-minify')
+const transform = promisify(babel.transform)
 const getImportPath = require('./get-import-path.js')
+const browsers = require('./browsers.js')
 const path = require('path')
 const detect = require('detective-es6')
 
@@ -17,13 +18,16 @@ module.exports = (args) => {
     extensions: ['.mjs', '.js'],
     contentType: 'text/javascript',
     async transform(from, code) {
-      const result = await babelTransform(code, {
+      const result = await transform(code, {
         sourceType: 'module',
         sourceMaps: args.dev ? 'inline' : false,
         sourceFileName: from,
         presets: [
-          [babelPresetEnv, {modules: false}],
-          babelPresetMinify
+          [presetEnv, {
+            targets: browsers,
+            modules: false
+          }],
+          presetMinify
         ],
         plugins: [
           () => {

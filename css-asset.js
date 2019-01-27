@@ -1,8 +1,9 @@
 const cssnano = require('cssnano')
 const postcss = require('postcss')
 const valueParser = require('postcss-value-parser')
-const postcssPresetEnv = require('postcss-preset-env')
+const presetEnv = require('postcss-preset-env')
 const getImportPath = require('./get-import-path.js')
+const browsers = require('./browsers.js')
 const path = require('path')
 const detect = require('detective-postcss')
 
@@ -17,7 +18,7 @@ module.exports = (args) => {
     contentType: 'text/css',
     async transform(from, code) {
       const result = await postcss([
-        postcssPresetEnv(),
+        presetEnv({browsers}),
         cssnano({preset: 'default'}),
         (root, result) => {
           root.walkAtRules((rule, b) => {
