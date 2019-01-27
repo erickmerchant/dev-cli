@@ -7,8 +7,8 @@ const globby = require('globby')
 const streamPromise = require('stream-to-promise')
 const createWriteStream = fs.createWriteStream
 const readFile = promisify(fs.readFile)
-const jsAsset = require('./js-asset.js')
-const cssAsset = require('./css-asset.js')
+const jsAsset = require('./src/js-asset.js')
+const cssAsset = require('./src/css-asset.js')
 const cwd = process.cwd()
 
 module.exports = (deps) => async (args) => {

@@ -9,9 +9,9 @@ const error = require('sergeant/error')
 const fs = require('fs')
 const del = require('del')
 const cacheDir = require('find-cache-dir')({name: 'dev'})
-const jsAsset = require('./js-asset.js')
-const cssAsset = require('./css-asset.js')
-const cacheTransform = require('./cache-transform.js')
+const jsAsset = require('./src/js-asset.js')
+const cssAsset = require('./src/css-asset.js')
+const cacheTransform = require('./src/cache-transform.js')
 const createReadStream = fs.createReadStream
 const cwd = process.cwd()
 const noop = () => {}

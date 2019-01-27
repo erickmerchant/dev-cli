@@ -2,10 +2,10 @@
 
 const command = require('sergeant')
 const serve = require('./serve.js')
-const copy = require('./copy.js')
+const cache = require('./cache.js')
 const out = process.stdout
 
-command('dev', 'run a development server or copy files, automatically running babel and postcss', ({command}) => {
+command('dev', 'run a development server or cache responses, automatically running babel and postcss', ({command}) => {
   command('serve', ({option, parameter}) => {
     parameter('src', {
       description: 'where to serve files from',
@@ -33,9 +33,9 @@ command('dev', 'run a development server or copy files, automatically running ba
     })(args)
   })
 
-  command('copy', ({option, parameter}) => {
+  command('cache', ({option, parameter}) => {
     parameter('src', {
-      description: 'where to copy files from',
+      description: 'where to cache files from',
       required: true,
       type(val) {
         return val
@@ -43,7 +43,7 @@ command('dev', 'run a development server or copy files, automatically running ba
     })
 
     parameter('dist', {
-      description: 'where to copy files to',
+      description: 'where to cache files to',
       required: true,
       type(val) {
         return val
@@ -55,7 +55,7 @@ command('dev', 'run a development server or copy files, automatically running ba
       alias: 'd'
     })
 
-    return (args) => copy({
+    return (args) => cache({
       out
     })(args)
   })
