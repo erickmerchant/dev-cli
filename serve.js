@@ -1,5 +1,5 @@
 const polka = require('polka')
-const sirv = require('sirv')
+const mime = require('mime/lite')
 const compression = require('compression')
 const {gray} = require('kleur')
 const path = require('path')
@@ -12,7 +12,6 @@ const cacheDir = require('find-cache-dir')({name: 'dev'})
 const jsAsset = require('./src/js-asset.js')
 const cssAsset = require('./src/css-asset.js')
 const cacheTransform = require('./src/cache-transform.js')
-const createReadStream = fs.createReadStream
 const cwd = process.cwd()
 const noop = () => {}
 
@@ -34,7 +33,7 @@ module.exports = (deps) => {
         }
 
         if (exists) {
-          const stream = createReadStream(file)
+          const stream = fs.createReadStream(file)
           const code = await streamPromise(stream)
           const stats = fs.statSync(file)
           const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
@@ -85,10 +84,35 @@ module.exports = (deps) => {
 
     app.use(getAssetMiddleware(jsAsset(args)))
 
-    app.use(sirv(args.src, {
-      etag: true,
-      dev: args.dev
-    }))
+    app.use(async (req, res, next) => {
+      const file = path.join(cwd, args.src, req.path)
+      const exists = fs.existsSync(file)
+
+      if (exists) {
+        const stats = fs.statSync(file)
+
+        if (stats.isFile()) {
+          const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
+
+          if (req.headers['if-none-match'] !== etag) {
+            res.writeHead(200, {
+              etag,
+              'content-type': mime.getType(path.extname(req.path))
+            })
+
+            fs.createReadStream(file).pipe(res)
+          } else {
+            res.statusCode = 304
+
+            res.end('')
+          }
+        } else {
+          next()
+        }
+      } else {
+        next()
+      }
+    })
 
     app.use(async (req, res, next) => {
       const file = path.join(cwd, args.src, 'index.html')
@@ -96,7 +120,7 @@ module.exports = (deps) => {
       if (fs.existsSync(file)) {
         res.writeHead(200, {'content-type': 'text/html'})
 
-        createReadStream(file).pipe(res)
+        fs.createReadStream(file).pipe(res)
       } else {
         res.statusCode = 404
 
