@@ -7,6 +7,9 @@ const streamPromise = require('stream-to-promise')
 const assert = require('assert')
 const error = require('sergeant/error')
 const fs = require('fs')
+const promisify = require('util').promisify
+const fstat = promisify(fs.stat)
+const fexists = promisify(fs.exists)
 const del = require('del')
 const cacheDir = require('find-cache-dir')({name: 'dev'})
 const jsAsset = require('./src/js-asset.js')
@@ -20,52 +23,60 @@ module.exports = (deps) => {
 
   assert.strictEqual(typeof deps.out.write, 'function')
 
-  const getAssetMiddleware = ({src, extensions, contentType, transform}) => async (req, res, next) => {
+  const safeMiddleware = (middleware) => async (req, res, next) => {
     try {
-      if (extensions.includes(path.extname(req.path))) {
-        let file = path.join(cwd, src, req.path)
-        let exists = fs.existsSync(file)
-
-        if (!exists) {
-          file = path.join(cwd, req.path)
-
-          exists = fs.existsSync(file)
-        }
-
-        if (exists) {
-          const stream = fs.createReadStream(file)
-          const code = await streamPromise(stream)
-          const stats = fs.statSync(file)
-          const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
-
-          if (req.headers['if-none-match'] !== etag) {
-            const result = await cacheTransform(cacheDir, transform)(req.path, code)
-
-            res.writeHead(200, {
-              etag,
-              'content-type': contentType
-            })
-
-            res.end(result)
-          } else {
-            res.statusCode = 304
-
-            res.end('')
-          }
-        } else {
-          res.statusCode = 404
-
-          res.end('')
-        }
-      } else {
-        next()
-      }
+      await middleware(req, res, next)
     } catch (err) {
       next(err)
     }
   }
 
+  const getAssetMiddleware = ({src, extensions, contentType, transform}) => async (req, res, next) => {
+    if (!extensions.includes(path.extname(req.path))) {
+      return next()
+    }
+
+    let file = path.join(cwd, src, req.path)
+    let exists = await fexists(file)
+
+    if (!exists) {
+      file = path.join(cwd, req.path)
+
+      exists = await fexists(file)
+    }
+
+    if (!exists) {
+      res.statusCode = 404
+
+      return res.end('')
+    }
+
+    const stream = fs.createReadStream(file)
+    const code = await streamPromise(stream)
+    const stats = await fstat(file)
+    const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
+
+    if (req.headers['if-none-match'] === etag) {
+      res.statusCode = 304
+
+      return res.end('')
+    }
+
+    const result = await cacheTransform(cacheDir, transform)(req.path, code)
+
+    res.writeHead(200, {
+      etag,
+      'content-type': contentType
+    })
+
+    res.end(result)
+  }
+
   return async (args, cb = noop) => {
+    if (cacheDir == null) {
+      throw new Error('cache directory not found')
+    }
+
     await del([cacheDir])
 
     const app = polka({
@@ -80,53 +91,66 @@ module.exports = (deps) => {
 
     app.use(compression())
 
-    app.use(getAssetMiddleware(cssAsset(args)))
+    app.use(safeMiddleware(getAssetMiddleware(cssAsset(args))))
 
-    app.use(getAssetMiddleware(jsAsset(args)))
+    app.use(safeMiddleware(getAssetMiddleware(jsAsset(args))))
 
-    app.use(async (req, res, next) => {
+    app.use(safeMiddleware(async (req, res, next) => {
       const file = path.join(cwd, args.src, req.path)
-      const exists = fs.existsSync(file)
+      const exists = await fexists(file)
 
-      if (exists) {
-        const stats = fs.statSync(file)
-
-        if (stats.isFile()) {
-          const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
-
-          if (req.headers['if-none-match'] !== etag) {
-            res.writeHead(200, {
-              etag,
-              'content-type': mime.getType(path.extname(req.path))
-            })
-
-            fs.createReadStream(file).pipe(res)
-          } else {
-            res.statusCode = 304
-
-            res.end('')
-          }
-        } else {
-          next()
-        }
-      } else {
-        next()
+      if (!exists) {
+        return next()
       }
-    })
 
-    app.use(async (req, res, next) => {
+      const stats = await fstat(file)
+
+      if (!stats.isFile()) {
+        return next()
+      }
+
+      const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
+
+      if (req.headers['if-none-match'] === etag) {
+        res.statusCode = 304
+
+        return res.end('')
+      }
+
+      res.writeHead(200, {
+        etag,
+        'content-type': mime.getType(path.extname(req.path))
+      })
+
+      fs.createReadStream(file).pipe(res)
+    }))
+
+    app.use(safeMiddleware(async (req, res, next) => {
       const file = path.join(cwd, args.src, 'index.html')
+      const exists = await fexists(file)
 
-      if (fs.existsSync(file)) {
-        res.writeHead(200, {'content-type': 'text/html'})
-
-        fs.createReadStream(file).pipe(res)
-      } else {
+      if (!exists) {
         res.statusCode = 404
 
-        res.end('')
+        return res.end('')
       }
-    })
+
+      const stats = await fstat(file)
+      const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
+
+      if (req.headers['if-none-match'] === etag) {
+        res.statusCode = 304
+
+        return res.end('')
+      }
+
+      res.writeHead(200, {
+        etag,
+        'content-type': 'text/html'
+      })
+
+      fs.createReadStream(file).pipe(res)
+    }))
 
     app.listen(args.port, (err) => {
       if (err) {
