@@ -1,165 +1,116 @@
-const polka = require('polka')
+const createServer = require('http').createServer
 const mime = require('mime/lite')
-const compression = require('compression')
+const promisify = require('util').promisify
+const compression = promisify(require('compression')())
 const {gray} = require('kleur')
 const path = require('path')
-const streamPromise = require('stream-to-promise')
-const assert = require('assert')
+const url = require('url')
 const error = require('sergeant/error')
 const fs = require('fs')
-const promisify = require('util').promisify
-const fstat = promisify(fs.stat)
-const fexists = promisify(fs.exists)
+const streamToPromise = require('stream-to-promise')
 const del = require('del')
 const cacheDir = require('find-cache-dir')({name: 'dev'})
-const jsAsset = require('./src/js-asset.js')
 const cssAsset = require('./src/css-asset.js')
+const jsAsset = require('./src/js-asset.js')
+const getStat = require('./src/get-stat.js')
 const cacheTransform = require('./src/cache-transform.js')
 const cwd = process.cwd()
 const noop = () => {}
 
-module.exports = (deps) => {
-  assert.ok(deps.out)
+module.exports = ({console}) => async (args, cb = noop) => {
+  if (cacheDir == null) {
+    throw new Error('cache directory not found')
+  }
 
-  assert.strictEqual(typeof deps.out.write, 'function')
+  await del([cacheDir])
 
-  const safeMiddleware = (middleware) => async (req, res, next) => {
+  const assets = [
+    cssAsset(args),
+    jsAsset(args)
+  ]
+
+  const app = createServer(async (req, res) => {
     try {
-      await middleware(req, res, next)
-    } catch (err) {
-      next(err)
-    }
-  }
+      const pathname = url.parse(req.url).pathname
 
-  const getAssetMiddleware = ({src, extensions, contentType, transform}) => async (req, res, next) => {
-    if (!extensions.includes(path.extname(req.path))) {
-      return next()
-    }
+      await compression(req, res)
 
-    let file = path.join(cwd, src, req.path)
-    let exists = await fexists(file)
+      let transform = false
 
-    if (!exists) {
-      file = path.join(cwd, req.path)
+      for (const asset of assets) {
+        if (asset.extensions.includes(path.extname(pathname))) {
+          transform = asset.transform
 
-      exists = await fexists(file)
-    }
+          break
+        }
+      }
 
-    if (!exists) {
-      res.statusCode = 404
+      let file = path.join(cwd, args.src, pathname)
+      let stat = await getStat(file)
 
-      return res.end('')
-    }
+      if (!stat) {
+        file = path.join(cwd, pathname)
 
-    const stream = fs.createReadStream(file)
-    const code = await streamPromise(stream)
-    const stats = await fstat(file)
-    const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
+        stat = await getStat(file)
 
-    if (req.headers['if-none-match'] === etag) {
-      res.statusCode = 304
+        if (!stat) {
+          if (!transform) {
+            file = path.join(cwd, args.src, 'index.html')
 
-      return res.end('')
-    }
+            stat = await getStat(file)
+          }
 
-    const result = await cacheTransform(cacheDir, transform)(req.path, code)
+          if (!stat) {
+            res.statusCode = 404
 
-    res.writeHead(200, {
-      etag,
-      'content-type': contentType
-    })
+            res.end('')
 
-    res.end(result)
-  }
+            return
+          }
+        }
+      }
 
-  return async (args, cb = noop) => {
-    if (cacheDir == null) {
-      throw new Error('cache directory not found')
-    }
+      const etag = `W/"${stat.size.toString(16)}-${stat.mtime.getTime().toString(16)}"`
 
-    await del([cacheDir])
-
-    const app = polka({
-      onError(err, req, res) {
-        error(err)
-
-        res.statusCode = 500
+      if (req.headers['if-none-match'] === etag) {
+        res.statusCode = 304
 
         res.end('')
-      }
-    })
 
-    app.use(compression())
-
-    app.use(safeMiddleware(getAssetMiddleware(cssAsset(args))))
-
-    app.use(safeMiddleware(getAssetMiddleware(jsAsset(args))))
-
-    app.use(safeMiddleware(async (req, res, next) => {
-      const file = path.join(cwd, args.src, req.path)
-      const exists = await fexists(file)
-
-      if (!exists) {
-        return next()
+        return
       }
 
-      const stats = await fstat(file)
+      let stream = fs.createReadStream(file)
+      const from = pathname
 
-      if (!stats.isFile()) {
-        return next()
-      }
+      if (transform) {
+        const code = await streamToPromise(stream)
 
-      const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
-
-      if (req.headers['if-none-match'] === etag) {
-        res.statusCode = 304
-
-        return res.end('')
+        stream = await cacheTransform({cacheDir, transform, code, from})
       }
 
       res.writeHead(200, {
         etag,
-        'content-type': mime.getType(path.extname(req.path))
+        'content-type': mime.getType(path.extname(file))
       })
 
-      fs.createReadStream(file).pipe(res)
-    }))
+      stream.pipe(res)
+    } catch (err) {
+      error(err)
 
-    app.use(safeMiddleware(async (req, res, next) => {
-      const file = path.join(cwd, args.src, 'index.html')
-      const exists = await fexists(file)
+      res.statusCode = 500
 
-      if (!exists) {
-        res.statusCode = 404
+      res.end('')
+    }
+  })
 
-        return res.end('')
-      }
+  app.listen(args.port, (err) => {
+    if (err) {
+      error(err)
+    } else {
+      console.log(`${gray('[dev]')} server is listening at port ${args.port}`)
+    }
 
-      const stats = await fstat(file)
-      const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`
-
-      if (req.headers['if-none-match'] === etag) {
-        res.statusCode = 304
-
-        return res.end('')
-      }
-
-      res.writeHead(200, {
-        etag,
-        'content-type': 'text/html'
-      })
-
-      fs.createReadStream(file).pipe(res)
-    }))
-
-    app.listen(args.port, (err) => {
-      if (err) {
-        error(err)
-      } else {
-        deps.out.write(`${gray('[dev]')} server is listening at port ${args.port}\n`)
-      }
-
-      cb(err, app)
-    })
-  }
+    cb(err, app)
+  })
 }

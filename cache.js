@@ -9,9 +9,10 @@ const createWriteStream = fs.createWriteStream
 const readFile = promisify(fs.readFile)
 const jsAsset = require('./src/js-asset.js')
 const cssAsset = require('./src/css-asset.js')
+const getStat = require('./src/get-stat.js')
 const cwd = process.cwd()
 
-module.exports = (deps) => async (args) => {
+module.exports = ({console}) => async (args) => {
   const assets = [
     jsAsset(args),
     cssAsset(args)
@@ -28,16 +29,16 @@ module.exports = (deps) => async (args) => {
     const newPath = path.join(args.dist, relative)
 
     let file = path.join(cwd, args.src, relative)
-    let exists = fs.existsSync(file)
+    let stat = await getStat(file)
 
-    if (!exists) {
+    if (!stat) {
       file = path.join(cwd, relative)
 
-      exists = fs.existsSync(file)
-    }
+      stat = await getStat(file)
 
-    if (!exists) {
-      return
+      if (!stat) {
+        return
+      }
     }
 
     let result = await readFile(file)
@@ -65,9 +66,12 @@ module.exports = (deps) => async (args) => {
 
     stream.end(result)
 
-    await Promise.all([streamPromise(stream).then(() => {
-      deps.out.write(`${gray('[dev]')} copied ${relative}\n`)
-    }), ...dependencies.map(cacheFile)])
+    await Promise.all([
+      streamPromise(stream).then(() => {
+        console.log(`${gray('[dev]')} copied ${relative}`)
+      }),
+      ...dependencies.map(cacheFile)
+    ])
   }
 
   files = files.map((file) => path.relative(args.src, file))

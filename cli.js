@@ -3,7 +3,6 @@
 const command = require('sergeant')
 const serve = require('./serve.js')
 const cache = require('./cache.js')
-const out = process.stdout
 
 command('dev', 'run a development server or cache responses, automatically running babel and postcss', ({command}) => {
   command('serve', ({option, parameter}) => {
@@ -28,9 +27,7 @@ command('dev', 'run a development server or cache responses, automatically runni
       alias: 'd'
     })
 
-    return (args) => serve({
-      out
-    })(args)
+    return (args) => serve({console})(args)
   })
 
   command('cache', ({option, parameter}) => {
@@ -55,8 +52,6 @@ command('dev', 'run a development server or cache responses, automatically runni
       alias: 'd'
     })
 
-    return (args) => cache({
-      out
-    })(args)
+    return (args) => cache({console})(args)
   })
 })(process.argv.slice(2))

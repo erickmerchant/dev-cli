@@ -1,31 +1,31 @@
 const crypto = require('crypto')
 const path = require('path')
 const fs = require('fs')
-const streamPromise = require('stream-to-promise')
+const streamToPromise = require('stream-to-promise')
+const toReadableStream = require('to-readable-stream')
 const makeDir = require('make-dir')
-const createReadStream = fs.createReadStream
-const createWriteStream = fs.createWriteStream
+const getStat = require('./get-stat.js')
 
-module.exports = (cacheDir, transform) => async (from, code) => {
+module.exports = async ({cacheDir, transform, code, from}) => {
   const hash = crypto.createHash('md5').update(code).digest('hex')
   const cacheFile = path.join(cacheDir, hash)
-  const exists = fs.existsSync(cacheFile)
+  const stat = await getStat(cacheFile)
 
-  if (exists) {
-    const stream = createReadStream(cacheFile)
+  if (stat) {
+    const stream = fs.createReadStream(cacheFile)
 
-    return streamPromise(stream)
+    return stream
   }
 
   const result = await transform(from, code)
 
   await makeDir(path.dirname(cacheFile))
 
-  const stream = createWriteStream(cacheFile)
+  const stream = fs.createWriteStream(cacheFile)
 
   stream.end(result)
 
-  await streamPromise(stream)
+  await streamToPromise(stream)
 
-  return result
+  return toReadableStream(result)
 }

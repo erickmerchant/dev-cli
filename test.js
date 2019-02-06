@@ -3,13 +3,11 @@ const got = require('got')
 const {gray} = require('kleur')
 const execa = require('execa')
 const getPort = require('get-port')
-const stream = require('stream')
-const out = new stream.Writable()
-
-out._write = () => {}
 
 const noopDeps = {
-  out
+  console: {
+    log() {}
+  }
 }
 
 test('serve.js - good response', async (t) => {
@@ -32,27 +30,23 @@ test('serve.js - good response', async (t) => {
       t.error(e)
     }
 
-    app.server.close()
+    app.close()
   })
 })
 
 test('serve.js - output', async (t) => {
   t.plan(2)
 
-  const out = new stream.Writable()
   const output = []
-
-  out._write = (line, encoding, done) => {
-    output.push(line.toString('utf8'))
-
-    done()
+  const console = {
+    log(line) {
+      output.push(line.toString('utf8'))
+    }
   }
 
   const port = await getPort()
 
-  require('./serve')({
-    out
-  })({port, src: './fixtures/'}, async (err, app) => {
+  require('./serve')({console})({port, src: './fixtures/'}, async (err, app) => {
     t.error(err)
 
     try {
@@ -61,9 +55,9 @@ test('serve.js - output', async (t) => {
       t.error(e)
     }
 
-    app.server.close(() => {
+    app.close(() => {
       t.deepEqual(output, [
-        `${gray('[dev]')} server is listening at port ${port}\n`
+        `${gray('[dev]')} server is listening at port ${port}`
       ])
     })
   })
