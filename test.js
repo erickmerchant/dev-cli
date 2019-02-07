@@ -10,6 +10,12 @@ const noopDeps = {
   }
 }
 
+const htmlOptions = {
+  headers: {
+    accept: 'text/html,*/*'
+  }
+}
+
 test('serve.js - good response', async (t) => {
   t.plan(4)
 
@@ -19,7 +25,7 @@ test('serve.js - good response', async (t) => {
     t.error(err)
 
     try {
-      const response = await got(`http://localhost:${port}/`)
+      const response = await got(`http://localhost:${port}/`, htmlOptions)
 
       t.equal(200, response.statusCode)
 
@@ -50,7 +56,7 @@ test('serve.js - output', async (t) => {
     t.error(err)
 
     try {
-      await got(`http://localhost:${port}/`)
+      await got(`http://localhost:${port}/`, htmlOptions)
     } catch (e) {
       t.error(e)
     }

@@ -32,15 +32,15 @@ module.exports = ({console}) => async (args, cb = noop) => {
 
   const app = createServer(async (req, res) => {
     try {
-      const pathname = url.parse(req.url).pathname
+      const from = url.parse(req.url).pathname
 
       await compression(req, res)
 
-      let file = path.join(cwd, args.src, pathname)
+      let file = path.join(cwd, args.src, from)
       let stat = await getStat(file)
 
       if (!stat) {
-        file = path.join(cwd, pathname)
+        file = path.join(cwd, from)
 
         stat = await getStat(file)
 
@@ -72,18 +72,20 @@ module.exports = ({console}) => async (args, cb = noop) => {
       }
 
       let stream = fs.createReadStream(file)
+      let transform
 
       for (const asset of assets) {
         if (asset.extensions.includes(path.extname(file))) {
-          const transform = asset.transform
-          const from = pathname
-
-          const code = await streamToPromise(stream)
-
-          stream = await cacheTransform({cacheDir, transform, code, from})
+          transform = asset.transform
 
           break
         }
+      }
+
+      if (transform) {
+        const code = await streamToPromise(stream)
+
+        stream = await cacheTransform({cacheDir, transform, code, from})
       }
 
       res.writeHead(200, {
