@@ -1,5 +1,6 @@
 const createServer = require('http').createServer
-const mime = require('mime/lite')
+const mime = require('mime-types')
+const accepts = require('accepts')
 const promisify = require('util').promisify
 const compression = promisify(require('compression')())
 const {gray} = require('kleur')
@@ -35,16 +36,6 @@ module.exports = ({console}) => async (args, cb = noop) => {
 
       await compression(req, res)
 
-      let transform = false
-
-      for (const asset of assets) {
-        if (asset.extensions.includes(path.extname(pathname))) {
-          transform = asset.transform
-
-          break
-        }
-      }
-
       let file = path.join(cwd, args.src, pathname)
       let stat = await getStat(file)
 
@@ -54,7 +45,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
         stat = await getStat(file)
 
         if (!stat) {
-          if (!transform) {
+          if (accepts(req).type(['txt', 'html']) === 'html') {
             file = path.join(cwd, args.src, 'index.html')
 
             stat = await getStat(file)
@@ -81,17 +72,23 @@ module.exports = ({console}) => async (args, cb = noop) => {
       }
 
       let stream = fs.createReadStream(file)
-      const from = pathname
 
-      if (transform) {
-        const code = await streamToPromise(stream)
+      for (const asset of assets) {
+        if (asset.extensions.includes(path.extname(file))) {
+          const transform = asset.transform
+          const from = pathname
 
-        stream = await cacheTransform({cacheDir, transform, code, from})
+          const code = await streamToPromise(stream)
+
+          stream = await cacheTransform({cacheDir, transform, code, from})
+
+          break
+        }
       }
 
       res.writeHead(200, {
         etag,
-        'content-type': mime.getType(path.extname(file))
+        'content-type': mime.contentType(path.extname(file))
       })
 
       stream.pipe(res)
