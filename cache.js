@@ -51,11 +51,11 @@ module.exports = ({console}) => async (args) => {
     await makeDir(path.dirname(newPath))
 
     const stream = createWriteStream(newPath)
-    let dependencies = []
+    const dependencies = []
 
     for (const asset of assets) {
       if (asset.extensions.includes(path.extname(relative))) {
-        dependencies = dependencies.concat(asset.detect(result)
+        dependencies.push(...asset.detect(result)
           .map((file) => {
             if (file.startsWith('/')) return file.substring(1)
 
