@@ -10,7 +10,7 @@ const error = require('sergeant/error')
 const fs = require('fs')
 const streamToPromise = require('stream-to-promise')
 const del = require('del')
-const cacheDir = require('find-cache-dir')({name: 'dev'})
+const cacheDir = require('find-cache-dir')({name: 'dev'}) || '.cache'
 const cssAsset = require('./src/css-asset.js')
 const jsAsset = require('./src/js-asset.js')
 const getStat = require('./src/get-stat.js')
@@ -19,10 +19,6 @@ const cwd = process.cwd()
 const noop = () => {}
 
 module.exports = ({console}) => async (args, cb = noop) => {
-  if (cacheDir == null) {
-    throw new Error('cache directory not found')
-  }
-
   await del([cacheDir])
 
   const assets = [
