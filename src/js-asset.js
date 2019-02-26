@@ -27,7 +27,11 @@ module.exports = (args) => {
             targets: browsers,
             modules: false
           }],
-          presetMinify
+          [presetMinify, {
+            mangle: {
+              topLevel: true
+            }
+          }]
         ],
         plugins: [
           () => {
