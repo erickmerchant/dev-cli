@@ -3,7 +3,6 @@ const parse5 = require('parse5')
 const getImportPath = require('./get-import-path.js')
 const jsAsset = require('./js-asset.js')
 const cssAsset = require('./css-asset.js')
-const streamToPromise = require('stream-to-promise')
 
 module.exports = (args) => {
   const assets = {
@@ -59,10 +58,8 @@ module.exports = (args) => {
       await Promise.all(traverse(ast.childNodes || [], async (obj, inline, type) => {
         if (inline) {
           results.push(obj.value)
-        } else {
-          if (assets[type]) {
-            results.push(...await assets[type].detect(obj.value))
-          }
+        } else if (assets[type]) {
+          results.push(...await assets[type].detect(obj.value))
         }
       }))
 
@@ -84,7 +81,9 @@ module.exports = (args) => {
             obj.value = getImportPath(obj.value, 'module', directories)
           }
         } else if (assets[type]) {
-          obj.value = await assets[type].transform(from, obj.value)
+          const value = obj.value
+
+          obj.value = await assets[type].transform(from, value)
         }
       }))
 

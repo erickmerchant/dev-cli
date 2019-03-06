@@ -13,7 +13,7 @@ module.exports = (args) => {
   const directories = [cwd, path.join(cwd, args.src)]
 
   return {
-    async detect (code) { return detectiveEs6(code) },
+    async detect(code) { return detectiveEs6(code) },
     src: args.src,
     extensions: ['.mjs', '.js'],
     contentType: 'text/javascript',

@@ -12,7 +12,7 @@ module.exports = (args) => {
   const directories = [cwd, path.join(cwd, args.src)]
 
   return {
-    async detect (code) { return detectivePostcss(code) },
+    async detect(code) { return detectivePostcss(code) },
     src: args.src,
     extensions: ['.css'],
     contentType: 'text/css',

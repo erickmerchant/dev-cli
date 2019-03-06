@@ -54,17 +54,22 @@ module.exports = ({console}) => async (args) => {
 
     const stream = createWriteStream(newPath)
     const dependencies = []
+    const promises = []
 
     for (const asset of assets) {
       if (asset.extensions.includes(path.extname(relative))) {
-        dependencies.push(...asset.detect(result)
-          .map((file) => {
-            if (file.startsWith('/')) return file.substring(1)
+        promises.push(asset.detect(result).then((detected) => {
+          dependencies.push(...detected
+            .map((file) => {
+              if (file.startsWith('/')) return file.substring(1)
 
-            return path.join(path.dirname(relative), file)
-          }))
+              return path.join(path.dirname(relative), file)
+            }))
+        }))
       }
     }
+
+    await Promise.all(promises)
 
     stream.end(result)
 
