@@ -6,7 +6,7 @@ module.exports = (args) => {
   const cwd = process.cwd()
   const directories = [cwd, path.join(cwd, args.src)]
 
-  const traverse = (nodes = []) => {
+  const traverse = (nodes, cb = () => {}) => {
     for (const node of nodes) {
       if (node.tagName === 'link') {
         const rel = node.attrs.find((attr) => attr.name === 'rel')
@@ -14,7 +14,7 @@ module.exports = (args) => {
         if (rel.value === 'stylesheet') {
           const href = node.attrs.find((attr) => attr.name === 'href')
 
-          href.value = getImportPath(href.value, 'style', directories)
+          cb(href, 'css')
         }
       }
 
@@ -24,25 +24,41 @@ module.exports = (args) => {
         if (type.value === 'module') {
           const src = node.attrs.find((attr) => attr.name === 'src')
 
-          src.value = getImportPath(src.value, 'module', directories)
+          cb(src, 'js')
         }
       }
 
-      traverse(node.childNodes)
+      traverse(node.childNodes || [], cb)
     }
   }
 
   return {
     detect(code) {
+      const ast = parse5.parseFragment(String(code))
 
+      const results = []
+
+      traverse(ast.childNodes || [], (attr) => {
+        results.push(attr.value)
+      })
+
+      return results
     },
     src: args.src,
     extensions: ['.html', '.htm'],
     contentType: 'text/html',
     async transform(from, code) {
-      const ast = parse5.parse(String(code))
+      const ast = parse5.parseFragment(String(code))
 
-      traverse(ast.childNodes)
+      traverse(ast.childNodes || [], (attr, type) => {
+        if (type === 'css') {
+          attr.value = getImportPath(attr.value, 'style', directories)
+        }
+
+        if (type === 'js') {
+          attr.value = getImportPath(attr.value, 'module', directories)
+        }
+      })
 
       return parse5.serialize(ast)
     }

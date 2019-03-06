@@ -7,15 +7,17 @@ const globby = require('globby')
 const streamPromise = require('stream-to-promise')
 const createWriteStream = fs.createWriteStream
 const readFile = promisify(fs.readFile)
-const jsAsset = require('./src/js-asset.js')
+const htmlAsset = require('./src/html-asset.js')
 const cssAsset = require('./src/css-asset.js')
+const jsAsset = require('./src/js-asset.js')
 const getStat = require('./src/get-stat.js')
 const cwd = process.cwd()
 
 module.exports = ({console}) => async (args) => {
   const assets = [
-    jsAsset(args),
-    cssAsset(args)
+    htmlAsset(args),
+    cssAsset(args),
+    jsAsset(args)
   ]
 
   let files = await globby([path.join(args.src, '**/*')], {dot: true})
