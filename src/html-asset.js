@@ -1,46 +1,70 @@
 const path = require('path')
 const parse5 = require('parse5')
 const getImportPath = require('./get-import-path.js')
+const jsAsset = require('./js-asset.js')
+const cssAsset = require('./css-asset.js')
+const streamToPromise = require('stream-to-promise')
 
 module.exports = (args) => {
+  const assets = {
+    css: cssAsset(args),
+    js: jsAsset(args)
+  }
   const cwd = process.cwd()
   const directories = [cwd, path.join(cwd, args.src)]
 
   const traverse = (nodes, cb = () => {}) => {
+    const promises = []
+
     for (const node of nodes) {
       if (node.tagName === 'link') {
         const rel = node.attrs.find((attr) => attr.name === 'rel')
 
-        if (rel.value === 'stylesheet') {
+        if (rel != null && rel.value === 'stylesheet') {
           const href = node.attrs.find((attr) => attr.name === 'href')
 
-          cb(href, 'css')
+          if (href != null) promises.push(cb(href, true, 'css'))
         }
+      }
+
+      if (node.tagName === 'style' && node.childNodes != null && node.childNodes[0] != null) {
+        promises.push(cb(node.childNodes[0], false, 'css'))
       }
 
       if (node.tagName === 'script') {
+        const src = node.attrs.find((attr) => attr.name === 'src')
         const type = node.attrs.find((attr) => attr.name === 'type')
 
-        if (type.value === 'module') {
-          const src = node.attrs.find((attr) => attr.name === 'src')
-
-          cb(src, 'js')
+        if (type != null && type.value === 'module') {
+          if (src != null) {
+            promises.push(cb(src, true, 'js'))
+          } else if (node.childNodes != null && node.childNodes[0] != null) {
+            promises.push(cb(node.childNodes[0], false, 'js'))
+          }
         }
       }
 
-      traverse(node.childNodes || [], cb)
+      promises.push(...traverse(node.childNodes || [], cb))
     }
+
+    return promises
   }
 
   return {
-    detect(code) {
+    async detect(code) {
       const ast = parse5.parseFragment(String(code))
 
       const results = []
 
-      traverse(ast.childNodes || [], (attr) => {
-        results.push(attr.value)
-      })
+      await Promise.all(traverse(ast.childNodes || [], async (obj, inline, type) => {
+        if (inline) {
+          results.push(obj.value)
+        } else {
+          if (assets[type]) {
+            results.push(...await assets[type].detect(obj.value))
+          }
+        }
+      }))
 
       return results
     },
@@ -50,15 +74,19 @@ module.exports = (args) => {
     async transform(from, code) {
       const ast = parse5.parseFragment(String(code))
 
-      traverse(ast.childNodes || [], (attr, type) => {
-        if (type === 'css') {
-          attr.value = getImportPath(attr.value, 'style', directories)
-        }
+      await Promise.all(traverse(ast.childNodes || [], async (obj, inline, type) => {
+        if (inline) {
+          if (type === 'css') {
+            obj.value = getImportPath(obj.value, 'style', directories)
+          }
 
-        if (type === 'js') {
-          attr.value = getImportPath(attr.value, 'module', directories)
+          if (type === 'js') {
+            obj.value = getImportPath(obj.value, 'module', directories)
+          }
+        } else if (assets[type]) {
+          obj.value = await assets[type].transform(from, obj.value)
         }
-      })
+      }))
 
       return parse5.serialize(ast)
     }

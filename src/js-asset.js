@@ -6,14 +6,14 @@ const transform = promisify(babel.transform)
 const getImportPath = require('./get-import-path.js')
 const browsers = require('./browsers.js')
 const path = require('path')
-const detect = require('detective-es6')
+const detectiveEs6 = require('detective-es6')
 
 module.exports = (args) => {
   const cwd = process.cwd()
   const directories = [cwd, path.join(cwd, args.src)]
 
   return {
-    detect,
+    async detect (code) { return detectiveEs6(code) },
     src: args.src,
     extensions: ['.mjs', '.js'],
     contentType: 'text/javascript',

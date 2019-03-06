@@ -5,14 +5,14 @@ const presetEnv = require('postcss-preset-env')
 const getImportPath = require('./get-import-path.js')
 const browsers = require('./browsers.js')
 const path = require('path')
-const detect = require('detective-postcss')
+const detectivePostcss = require('detective-postcss')
 
 module.exports = (args) => {
   const cwd = process.cwd()
   const directories = [cwd, path.join(cwd, args.src)]
 
   return {
-    detect,
+    async detect (code) { return detectivePostcss(code) },
     src: args.src,
     extensions: ['.css'],
     contentType: 'text/css',
