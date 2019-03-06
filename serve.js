@@ -6,25 +6,24 @@ const compression = promisify(require('compression')())
 const {gray} = require('kleur')
 const path = require('path')
 const url = require('url')
-const parse5 = require('parse5')
 const error = require('sergeant/error')
 const fs = require('fs')
 const streamToPromise = require('stream-to-promise')
 const del = require('del')
 const cacheDir = require('find-cache-dir')({name: 'dev'}) || '.cache'
+const htmlAsset = require('./src/html-asset.js')
 const cssAsset = require('./src/css-asset.js')
 const jsAsset = require('./src/js-asset.js')
-const htmlAsset = require('./src/html-asset.js')
 const getStat = require('./src/get-stat.js')
 const cacheTransform = require('./src/cache-transform.js')
 const cwd = process.cwd()
 const noop = () => {}
 
 module.exports = ({console}) => async (args, cb = noop) => {
-  const directories = [cwd, path.join(cwd, args.src)]
   await del([cacheDir])
 
   const assets = [
+    htmlAsset(args),
     cssAsset(args),
     jsAsset(args)
   ]
@@ -71,17 +70,20 @@ module.exports = ({console}) => async (args, cb = noop) => {
       }
 
       let stream = fs.createReadStream(file)
+      let transform
 
       for (const asset of assets) {
         if (asset.extensions.includes(path.extname(file))) {
-          let transform = asset.transform
-
-          const code = await streamToPromise(stream)
-
-          stream = await cacheTransform({cacheDir, transform, code, from})
+          transform = asset.transform
 
           break
         }
+      }
+
+      if (transform) {
+        const code = await streamToPromise(stream)
+
+        stream = await cacheTransform({cacheDir, transform, code, from})
       }
 
       res.writeHead(200, {
