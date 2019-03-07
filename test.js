@@ -31,7 +31,7 @@ test('serve.js - good response', async (t) => {
 
       t.equal('text/html; charset=utf-8', response.headers['content-type'].toLowerCase())
 
-      t.equal('<h1>index</h1>\n', response.body)
+      t.equal('<!DOCTYPE html><html><head></head><body>\n    <h1>index</h1>\n  \n\n</body></html>', response.body)
     } catch (e) {
       t.error(e)
     }

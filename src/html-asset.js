@@ -51,7 +51,7 @@ module.exports = (args) => {
 
   return {
     async detect(code) {
-      const ast = parse5.parseFragment(String(code))
+      const ast = parse5.parse(String(code))
 
       const results = []
 
@@ -69,7 +69,7 @@ module.exports = (args) => {
     extensions: ['.html', '.htm'],
     contentType: 'text/html',
     async transform(from, code) {
-      const ast = parse5.parseFragment(String(code))
+      const ast = parse5.parse(String(code))
 
       await Promise.all(traverse(ast.childNodes || [], async (obj, inline, type) => {
         if (inline) {
