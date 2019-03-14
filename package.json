@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/erickmerchant/dev-cli#readme",
   "devDependencies": {
-    "@erickmerchant/lint": "^2.1.0",
+    "@erickmerchant/lint": "^2.2.0",
     "eslint": "^5.15.1",
     "execa": "^1.0.0",
     "get-port": "^4.2.0",
@@ -38,7 +38,7 @@
     "del": "^4.0.0",
     "detective-es6": "^2.1.0",
     "detective-postcss": "^3.0.1",
-    "find-cache-dir": "^2.0.0",
+    "find-cache-dir": "^2.1.0",
     "globby": "^9.1.0",
     "got": "^9.6.0",
     "kleur": "^3.0.2",
