@@ -1,8 +1,6 @@
-const createServer = require('http').createServer
+const createSecureServer = require('http2').createSecureServer
 const mime = require('mime-types')
 const accepts = require('accepts')
-const promisify = require('util').promisify
-const compression = promisify(require('compression')())
 const {gray} = require('kleur')
 const path = require('path')
 const url = require('url')
@@ -18,6 +16,7 @@ const getStat = require('./src/get-stat.js')
 const cacheTransform = require('./src/cache-transform.js')
 const cwd = process.cwd()
 const noop = () => {}
+const referers = {}
 
 module.exports = ({console}) => async (args, cb = noop) => {
   await del([cacheDir])
@@ -28,11 +27,26 @@ module.exports = ({console}) => async (args, cb = noop) => {
     jsAsset(args)
   ]
 
-  const app = createServer(async (req, res) => {
+  const app = createSecureServer({
+    key: fs.readFileSync(path.join(__dirname, './storage/ssl.key')),
+    cert: fs.readFileSync(path.join(__dirname, './storage/ssl.crt'))
+  })
+
+  app.on('error', (err) => error(err))
+
+  app.on('request', async (req, res) => {
     try {
       const from = url.parse(req.url).pathname
 
-      await compression(req, res)
+      if (req.headers.referer != null) {
+        const referer = url.parse(req.headers.referer).pathname
+
+        if (referers[referer] == null) {
+          referers[referer] = []
+        }
+
+        referers[referer].push(from)
+      }
 
       let file = path.join(cwd, args.src, from)
       let stat = await getStat(file)
@@ -55,6 +69,17 @@ module.exports = ({console}) => async (args, cb = noop) => {
             res.end('')
 
             return
+          } else if (res.stream.pushAllowed && referers[from] != null) {
+            for (const path of referers[from]) {
+              // res.stream.pushStream({':path': path}, (err, stream) => {
+              //   if (err) {
+              //     error(err)
+
+              //     return
+              //   }
+
+              // })
+            }
           }
         }
       }
