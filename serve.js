@@ -1,10 +1,15 @@
-const createSecureServer = require('http2').createSecureServer
+const http2 = require('http2')
+const createSecureServer = http2.createSecureServer
+const {
+  HTTP2_HEADER_PATH,
+  HTTP2_HEADER_STATUS,
+  HTTP2_HEADER_CONTENT_TYPE,
+} = http2.constants
 const mime = require('mime-types')
 const accepts = require('accepts')
 const {gray} = require('kleur')
 const path = require('path')
 const url = require('url')
-const error = require('sergeant/error')
 const fs = require('fs')
 const streamToPromise = require('stream-to-promise')
 const del = require('del')
@@ -17,6 +22,7 @@ const cacheTransform = require('./src/cache-transform.js')
 const cwd = process.cwd()
 const noop = () => {}
 const referers = {}
+
 
 module.exports = ({console}) => async (args, cb = noop) => {
   await del([cacheDir])
@@ -32,22 +38,10 @@ module.exports = ({console}) => async (args, cb = noop) => {
     cert: fs.readFileSync(path.join(__dirname, './storage/ssl.crt'))
   })
 
-  app.on('error', (err) => error(err))
+  const respond = async (from, prefersHTML, ifNoneMatch) => {
+    const result = {}
 
-  app.on('request', async (req, res) => {
     try {
-      const from = url.parse(req.url).pathname
-
-      if (req.headers.referer != null) {
-        const referer = url.parse(req.headers.referer).pathname
-
-        if (referers[referer] == null) {
-          referers[referer] = []
-        }
-
-        referers[referer].push(from)
-      }
-
       let file = path.join(cwd, args.src, from)
       let stat = await getStat(file)
 
@@ -57,41 +51,26 @@ module.exports = ({console}) => async (args, cb = noop) => {
         stat = await getStat(file)
 
         if (!stat) {
-          if (accepts(req).type(['txt', 'html']) === 'html') {
+          if (prefersHTML) {
             file = path.join(cwd, args.src, 'index.html')
 
             stat = await getStat(file)
           }
 
           if (!stat) {
-            res.statusCode = 404
+            result.statusCode = 404
 
-            res.end('')
-
-            return
-          } else if (res.stream.pushAllowed && referers[from] != null) {
-            for (const path of referers[from]) {
-              // res.stream.pushStream({':path': path}, (err, stream) => {
-              //   if (err) {
-              //     error(err)
-
-              //     return
-              //   }
-
-              // })
-            }
+            return result
           }
         }
       }
 
       const etag = `W/"${stat.size.toString(16)}-${stat.mtime.getTime().toString(16)}"`
 
-      if (req.headers['if-none-match'] === etag) {
-        res.statusCode = 304
+      if (ifNoneMatch === etag) {
+        result.statusCode = 304
 
-        res.end('')
-
-        return
+        return result
       }
 
       let stream = fs.createReadStream(file)
@@ -111,24 +90,84 @@ module.exports = ({console}) => async (args, cb = noop) => {
         stream = await cacheTransform({cacheDir, transform, code, from})
       }
 
-      res.writeHead(200, {
+      result.statusCode = 200
+
+      result.headers = {
         etag,
-        'content-type': mime.contentType(path.extname(file))
+        [HTTP2_HEADER_CONTENT_TYPE]: mime.contentType(path.extname(file))
+      }
+
+      result.stream = stream
+    } catch (err) {
+      console.error(err)
+
+      result.statusCode = 500
+    }
+
+    return result
+  }
+
+  const push = (from, res) => {
+    if (referers[from] == null) return
+
+    for (const path of referers[from]) {
+      if (!res.stream.pushAllowed) continue
+
+      res.stream.pushStream({[HTTP2_HEADER_PATH]: path}, async (err, stream) => {
+        if (err) {
+          console.error(err)
+
+          return
+        }
+
+        stream.on('error', (err) => {
+          console.error(err)
+        })
+
+        try {
+          const result = await respond(path, false)
+
+          stream.respond({[HTTP2_HEADER_STATUS]: result.statusCode, ...result.headers})
+
+          if (result.stream) result.stream.pipe(stream)
+        } catch (err) {
+          console.error(err)
+        }
       })
 
-      stream.pipe(res)
-    } catch (err) {
-      error(err)
-
-      res.statusCode = 500
-
-      res.end('')
+      push(path, res)
     }
+  }
+
+  app.on('error', (err) => console.error(err))
+
+  app.on('request', async (req, res) => {
+    const from = url.parse(req.url).pathname
+    const prefersHTML = accepts(req).type(['txt', 'html']) === 'html'
+    const ifNoneMatch = req.headers['if-none-match']
+
+    if (req.headers.referer != null) {
+      const referer = url.parse(req.headers.referer).pathname
+
+      if (referers[referer] == null) {
+        referers[referer] = []
+      }
+
+      referers[referer].push(from)
+    }
+
+    const result = await respond(from, prefersHTML, ifNoneMatch)
+
+    res.writeHead(result.statusCode, result.headers)
+
+    if (result.stream) result.stream.pipe(res)
+
+    push(from, res)
   })
 
   app.listen(args.port, (err) => {
     if (err) {
-      error(err)
+      console.error(err)
     } else {
       console.log(`${gray('[dev]')} server is listening at port ${args.port}`)
     }
