@@ -3,7 +3,7 @@ const createSecureServer = http2.createSecureServer
 const {
   HTTP2_HEADER_PATH,
   HTTP2_HEADER_STATUS,
-  HTTP2_HEADER_CONTENT_TYPE,
+  HTTP2_HEADER_CONTENT_TYPE
 } = http2.constants
 const mime = require('mime-types')
 const accepts = require('accepts')
@@ -23,7 +23,6 @@ const cwd = process.cwd()
 const noop = () => {}
 const referers = {}
 
-
 module.exports = ({console}) => async (args, cb = noop) => {
   await del([cacheDir])
 
@@ -34,9 +33,15 @@ module.exports = ({console}) => async (args, cb = noop) => {
   ]
 
   const app = createSecureServer({
-    key: fs.readFileSync(path.join(__dirname, './storage/ssl.key')),
-    cert: fs.readFileSync(path.join(__dirname, './storage/ssl.crt'))
+    key: fs.readFileSync(path.join(__dirname, './storage/key.pem')),
+    cert: fs.readFileSync(path.join(__dirname, './storage/cert.pem'))
   })
+
+  const error = (err) => {
+    if (err.code !== 'ERR_HTTP2_STREAM_ERROR') {
+      console.log(err)
+    }
+  }
 
   const respond = async (from, prefersHTML, ifNoneMatch) => {
     const result = {}
@@ -99,7 +104,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
 
       result.stream = stream
     } catch (err) {
-      console.error(err)
+      error(err)
 
       result.statusCode = 500
     }
@@ -115,31 +120,27 @@ module.exports = ({console}) => async (args, cb = noop) => {
 
       res.stream.pushStream({[HTTP2_HEADER_PATH]: path}, async (err, stream) => {
         if (err) {
-          console.error(err)
+          error(err)
 
           return
         }
 
         stream.on('error', (err) => {
-          console.error(err)
+          error(err)
         })
 
-        try {
-          const result = await respond(path, false)
+        const result = await respond(path, false)
 
-          stream.respond({[HTTP2_HEADER_STATUS]: result.statusCode, ...result.headers})
+        stream.respond({[HTTP2_HEADER_STATUS]: result.statusCode, ...result.headers})
 
-          if (result.stream) result.stream.pipe(stream)
-        } catch (err) {
-          console.error(err)
-        }
+        if (result.stream) result.stream.pipe(stream)
       })
 
       push(path, res)
     }
   }
 
-  app.on('error', (err) => console.error(err))
+  app.on('error', (err) => error(err))
 
   app.on('request', async (req, res) => {
     const from = url.parse(req.url).pathname
@@ -167,7 +168,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
 
   app.listen(args.port, (err) => {
     if (err) {
-      console.error(err)
+      error(err)
     } else {
       console.log(`${gray('[dev]')} server is listening at port ${args.port}`)
     }

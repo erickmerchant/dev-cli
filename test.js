@@ -1,8 +1,11 @@
 const test = require('tape')
-const got = require('got')
+const fs = require('fs')
+const path = require('path')
+const http2 = require('http2')
 const {gray} = require('kleur')
 const execa = require('execa')
 const getPort = require('get-port')
+const streamPromise = require('stream-to-promise')
 
 const noopDeps = {
   console: {
@@ -11,9 +14,7 @@ const noopDeps = {
 }
 
 const htmlOptions = {
-  headers: {
-    accept: 'text/html,*/*'
-  }
+  accept: 'text/html,*/*'
 }
 
 test('serve.js - good response', async (t) => {
@@ -25,13 +26,33 @@ test('serve.js - good response', async (t) => {
     t.error(err)
 
     try {
-      const response = await got(`http://localhost:${port}/`, htmlOptions)
+      const client = http2.connect(`https://localhost:${port}`, {
+        ca: fs.readFileSync(path.join(__dirname, './storage/cert.pem'))
+      })
 
-      t.equal(200, response.statusCode)
+      client.on('error', (err) => console.error(err))
 
-      t.equal('text/html; charset=utf-8', response.headers['content-type'].toLowerCase())
+      const req = client.request({':path': '/', ...htmlOptions})
 
-      t.equal('<!DOCTYPE html><html><head></head><body>\n    <h1>index</h1>\n  \n\n</body></html>', response.body)
+      let statusCode
+      let contentType
+
+      req.on('response', (headers, flags) => {
+        statusCode = headers[':status']
+        contentType = headers['content-type']
+      })
+
+      req.setEncoding('utf8')
+
+      const response = await streamPromise(req)
+
+      client.close()
+
+      t.equal(200, statusCode)
+
+      t.equal('text/html; charset=utf-8', contentType.toLowerCase())
+
+      t.equal('<!DOCTYPE html><html><head></head><body>\n    <h1>index</h1>\n  \n\n</body></html>', String(response))
     } catch (e) {
       t.error(e)
     }
@@ -56,7 +77,19 @@ test('serve.js - output', async (t) => {
     t.error(err)
 
     try {
-      await got(`http://localhost:${port}/`, htmlOptions)
+      const client = http2.connect(`https://localhost:${port}`, {
+        ca: fs.readFileSync(path.join(__dirname, './storage/cert.pem'))
+      })
+
+      client.on('error', (err) => console.error(err))
+
+      const req = client.request({':path': '/', ...htmlOptions})
+
+      req.setEncoding('utf8')
+
+      await streamPromise(req)
+
+      client.close()
     } catch (e) {
       t.error(e)
     }

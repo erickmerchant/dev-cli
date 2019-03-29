@@ -39,7 +39,6 @@
     "detective-postcss": "^3.0.1",
     "find-cache-dir": "^2.1.0",
     "globby": "^9.1.0",
-    "got": "^9.6.0",
     "kleur": "^3.0.2",
     "make-dir": "^2.1.0",
     "mime-types": "^2.1.22",
