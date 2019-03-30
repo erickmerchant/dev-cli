@@ -50,24 +50,22 @@ module.exports = ({console}) => async (args, cb = noop) => {
       let file = path.join(cwd, args.src, pathname)
       let stat = await getStat(file)
 
-      if (!stat) {
+      if (!stat && pathname.startsWith('/node_modules/')) {
         file = path.join(cwd, pathname)
 
         stat = await getStat(file)
+      }
 
-        if (!stat) {
-          if (prefersHTML) {
-            file = path.join(cwd, args.src, 'index.html')
+      if (!stat && prefersHTML) {
+        file = path.join(cwd, args.src, 'index.html')
 
-            stat = await getStat(file)
-          }
+        stat = await getStat(file)
+      }
 
-          if (!stat) {
-            result.statusCode = 404
+      if (!stat) {
+        result.statusCode = 404
 
-            return result
-          }
-        }
+        return result
       }
 
       const etag = `W/"${stat.size.toString(16)}-${stat.mtime.getTime().toString(16)}"`
