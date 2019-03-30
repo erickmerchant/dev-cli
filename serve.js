@@ -43,15 +43,15 @@ module.exports = ({console}) => async (args, cb = noop) => {
     }
   }
 
-  const respond = async (from, prefersHTML, ifNoneMatch) => {
+  const respond = async (pathname, prefersHTML, ifNoneMatch) => {
     const result = {}
 
     try {
-      let file = path.join(cwd, args.src, from)
+      let file = path.join(cwd, args.src, pathname)
       let stat = await getStat(file)
 
       if (!stat) {
-        file = path.join(cwd, from)
+        file = path.join(cwd, pathname)
 
         stat = await getStat(file)
 
@@ -92,7 +92,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
       if (transform) {
         const code = await streamToPromise(stream)
 
-        stream = await cacheTransform({cacheDir, transform, code, from})
+        stream = await cacheTransform({cacheDir, transform, code, pathname})
       }
 
       result.statusCode = 200
@@ -112,10 +112,10 @@ module.exports = ({console}) => async (args, cb = noop) => {
     return result
   }
 
-  const push = (from, res) => {
-    if (referers[from] == null) return
+  const push = (pathname, res) => {
+    if (referers[pathname] == null) return
 
-    for (const path of referers[from]) {
+    for (const path of referers[pathname]) {
       if (!res.stream.pushAllowed) continue
 
       res.stream.pushStream({[HTTP2_HEADER_PATH]: path}, async (err, stream) => {
@@ -131,9 +131,11 @@ module.exports = ({console}) => async (args, cb = noop) => {
 
         const result = await respond(path, false)
 
-        stream.respond({[HTTP2_HEADER_STATUS]: result.statusCode, ...result.headers})
+        if (!stream.destroyed) {
+          stream.respond({[HTTP2_HEADER_STATUS]: result.statusCode, ...result.headers})
 
-        if (result.stream) result.stream.pipe(stream)
+          if (result.stream) result.stream.pipe(stream)
+        }
       })
 
       push(path, res)
@@ -143,7 +145,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
   app.on('error', (err) => error(err))
 
   app.on('request', async (req, res) => {
-    const from = url.parse(req.url).pathname
+    const pathname = url.parse(req.url).pathname
     const prefersHTML = accepts(req).type(['txt', 'html']) === 'html'
     const ifNoneMatch = req.headers['if-none-match']
 
@@ -154,23 +156,23 @@ module.exports = ({console}) => async (args, cb = noop) => {
         referers[referer] = []
       }
 
-      referers[referer].push(from)
+      referers[referer].push(pathname)
     }
 
-    const result = await respond(from, prefersHTML, ifNoneMatch)
+    const result = await respond(pathname, prefersHTML, ifNoneMatch)
 
     res.writeHead(result.statusCode, result.headers)
 
     if (result.stream) result.stream.pipe(res)
 
-    push(from, res)
+    push(pathname, res)
   })
 
   app.listen(args.port, (err) => {
     if (err) {
       error(err)
     } else {
-      console.log(`${gray('[dev]')} server is listening at port ${args.port}`)
+      console.log(`${gray('[dev]')} go to https://localhost:${args.port}`)
     }
 
     cb(err, app)

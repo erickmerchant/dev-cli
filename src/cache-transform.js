@@ -6,7 +6,7 @@ const toReadableStream = require('to-readable-stream')
 const makeDir = require('make-dir')
 const getStat = require('./get-stat.js')
 
-module.exports = async ({cacheDir, transform, code, from}) => {
+module.exports = async ({cacheDir, transform, code, pathname}) => {
   const hash = crypto.createHash('md5').update(code).digest('hex')
   const cacheFile = path.join(cacheDir, hash)
   const stat = await getStat(cacheFile)
@@ -17,7 +17,7 @@ module.exports = async ({cacheDir, transform, code, from}) => {
     return stream
   }
 
-  const result = await transform(from, code)
+  const result = await transform(pathname, code)
 
   await makeDir(path.dirname(cacheFile))
 
