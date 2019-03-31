@@ -4,11 +4,8 @@ const valueParser = require('postcss-value-parser')
 const presetEnv = require('postcss-preset-env')
 const getImportPath = require('./get-import-path.js')
 const browsers = require('./browsers.js')
-const path = require('path')
 
 module.exports = (args) => {
-  const cwd = process.cwd()
-
   return {
     src: args.src,
     extensions: ['.css'],

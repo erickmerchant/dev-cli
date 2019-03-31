@@ -1,4 +1,3 @@
-const path = require('path')
 const parse5 = require('parse5')
 const getImportPath = require('./get-import-path.js')
 const jsAsset = require('./js-asset.js')
@@ -9,7 +8,6 @@ module.exports = (args) => {
     css: cssAsset(args),
     js: jsAsset(args)
   }
-  const cwd = process.cwd()
 
   const traverse = (nodes, cb = () => {}) => {
     const promises = []

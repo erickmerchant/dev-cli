@@ -5,11 +5,8 @@ const presetMinify = require('babel-preset-minify')
 const transform = promisify(babel.transform)
 const getImportPath = require('./get-import-path.js')
 const browsers = require('./browsers.js')
-const path = require('path')
 
 module.exports = (args) => {
-  const cwd = process.cwd()
-
   return {
     src: args.src,
     extensions: ['.mjs', '.js'],
