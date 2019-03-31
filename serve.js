@@ -14,7 +14,6 @@ const fs = require('fs')
 const streamPromise = require('stream-to-promise')
 const toReadableStream = require('to-readable-stream')
 const del = require('del')
-const crypto = require('crypto')
 const makeDir = require('make-dir')
 const cacheDir = require('find-cache-dir')({name: 'dev'}) || '.cache'
 const htmlAsset = require('./src/html-asset.js')
@@ -93,12 +92,12 @@ module.exports = ({console}) => async (args, cb = noop) => {
       if (transform) {
         const source = await streamPromise(stream)
 
-        const hash = crypto.createHash('md5').update(source).digest('hex')
-        const cacheFile = path.join(cacheDir, hash)
-        const stat = await getStat(cacheFile)
+        const cacheFile = `${pathname}/${stat.size.toString(16)}-${stat.mtime.getTime().toString(16)}`
+        const cacheFull = path.join(cacheDir, cacheFile)
+        const cacheExists = await getStat(cacheFull)
 
-        if (stat) {
-          stream = fs.createReadStream(cacheFile)
+        if (cacheExists) {
+          stream = fs.createReadStream(cacheFull)
         } else {
           const transformed = await transform(pathname, source)
 
@@ -108,9 +107,9 @@ module.exports = ({console}) => async (args, cb = noop) => {
             dependencies.push(...filtered)
           }
 
-          await makeDir(path.dirname(cacheFile))
+          await makeDir(path.dirname(cacheFull))
 
-          const writeStream = fs.createWriteStream(cacheFile)
+          const writeStream = fs.createWriteStream(cacheFull)
 
           writeStream.end(transformed.code)
 
