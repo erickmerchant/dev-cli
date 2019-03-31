@@ -5,18 +5,17 @@ const presetEnv = require('postcss-preset-env')
 const getImportPath = require('./get-import-path.js')
 const browsers = require('./browsers.js')
 const path = require('path')
-const detectivePostcss = require('detective-postcss')
 
 module.exports = (args) => {
   const cwd = process.cwd()
-  const directories = [cwd, path.join(cwd, args.src)]
 
   return {
-    async detect(code) { return detectivePostcss(code) },
     src: args.src,
     extensions: ['.css'],
     contentType: 'text/css',
     async transform(from, code) {
+      const dependencies = []
+
       const result = await postcss([
         presetEnv({browsers}),
         cssnano({preset: 'default'}),
@@ -25,7 +24,11 @@ module.exports = (args) => {
             if (rule.name === 'import') {
               const parsed = valueParser(rule.params)
 
-              parsed.nodes[0].value = getImportPath(parsed.nodes[0].value, 'style', directories)
+              const importPath = getImportPath(from, parsed.nodes[0].value, 'style')
+
+              dependencies.push(importPath)
+
+              parsed.nodes[0].value = importPath
 
               rule.params = String(parsed)
             }
@@ -36,7 +39,10 @@ module.exports = (args) => {
         map: args.dev ? {inline: true} : false
       })
 
-      return result.css
+      return {
+        dependencies,
+        code: result.css
+      }
     }
   }
 }

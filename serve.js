@@ -11,17 +11,18 @@ const {gray} = require('kleur')
 const path = require('path')
 const url = require('url')
 const fs = require('fs')
-const streamToPromise = require('stream-to-promise')
+const streamPromise = require('stream-to-promise')
+const toReadableStream = require('to-readable-stream')
 const del = require('del')
+const crypto = require('crypto')
+const makeDir = require('make-dir')
 const cacheDir = require('find-cache-dir')({name: 'dev'}) || '.cache'
 const htmlAsset = require('./src/html-asset.js')
 const cssAsset = require('./src/css-asset.js')
 const jsAsset = require('./src/js-asset.js')
 const getStat = require('./src/get-stat.js')
-const cacheTransform = require('./src/cache-transform.js')
 const cwd = process.cwd()
 const noop = () => {}
-const referers = {}
 
 module.exports = ({console}) => async (args, cb = noop) => {
   await del([cacheDir])
@@ -31,6 +32,8 @@ module.exports = ({console}) => async (args, cb = noop) => {
     cssAsset(args),
     jsAsset(args)
   ]
+  const referers = {}
+  const dependencies = []
 
   const app = createSecureServer({
     key: fs.readFileSync(path.join(__dirname, './storage/key.pem')),
@@ -38,7 +41,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
   })
 
   const error = (err) => {
-    if (err.code !== 'ERR_HTTP2_STREAM_ERROR') {
+    if (!['ERR_HTTP2_STREAM_ERROR', 'ERR_HTTP2_INVALID_STREAM'].includes(err.code)) {
       console.log(err)
     }
   }
@@ -50,7 +53,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
       let file = path.join(cwd, args.src, pathname)
       let stat = await getStat(file)
 
-      if (!stat && pathname.startsWith('/node_modules/')) {
+      if (!stat && dependencies.includes(pathname)) {
         file = path.join(cwd, pathname)
 
         stat = await getStat(file)
@@ -88,9 +91,33 @@ module.exports = ({console}) => async (args, cb = noop) => {
       }
 
       if (transform) {
-        const code = await streamToPromise(stream)
+        const source = await streamPromise(stream)
 
-        stream = await cacheTransform({cacheDir, transform, code, pathname})
+        const hash = crypto.createHash('md5').update(source).digest('hex')
+        const cacheFile = path.join(cacheDir, hash)
+        const stat = await getStat(cacheFile)
+
+        if (stat) {
+          stream = fs.createReadStream(cacheFile)
+        } else {
+          const transformed = await transform(pathname, source)
+
+          const filtered = transformed.dependencies.filter((dep) => !dependencies.includes(dep))
+
+          if (filtered.length) {
+            dependencies.push(...filtered)
+          }
+
+          await makeDir(path.dirname(cacheFile))
+
+          const writeStream = fs.createWriteStream(cacheFile)
+
+          writeStream.end(transformed.code)
+
+          await streamPromise(writeStream)
+
+          stream = toReadableStream(transformed.code)
+        }
       }
 
       result.statusCode = 200

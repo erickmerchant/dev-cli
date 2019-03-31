@@ -6,18 +6,17 @@ const transform = promisify(babel.transform)
 const getImportPath = require('./get-import-path.js')
 const browsers = require('./browsers.js')
 const path = require('path')
-const detectiveEs6 = require('detective-es6')
 
 module.exports = (args) => {
   const cwd = process.cwd()
-  const directories = [cwd, path.join(cwd, args.src)]
 
   return {
-    async detect(code) { return detectiveEs6(code) },
     src: args.src,
     extensions: ['.mjs', '.js'],
     contentType: 'text/javascript',
     async transform(from, code) {
+      const dependencies = []
+
       const result = await transform(code, {
         sourceType: 'module',
         sourceMaps: args.dev ? 'inline' : false,
@@ -41,12 +40,20 @@ module.exports = (args) => {
                   const [source] = node.arguments
 
                   if (node.callee.type === 'Import' && source.type === 'StringLiteral') {
-                    source.value = getImportPath(source.value, 'module', directories)
+                    const importPath = getImportPath(from, source.value, 'module')
+
+                    source.value = importPath
+
+                    dependencies.push(importPath)
                   }
                 },
                 'ImportDeclaration|ExportNamedDeclaration|ExportAllDeclaration'({node}) {
                   if (node.source != null) {
-                    node.source.value = getImportPath(node.source.value, 'module', directories)
+                    const importPath = getImportPath(from, node.source.value, 'module')
+
+                    node.source.value = importPath
+
+                    dependencies.push(importPath)
                   }
                 }
               }
@@ -55,7 +62,10 @@ module.exports = (args) => {
         ]
       })
 
-      return result.code
+      return {
+        dependencies,
+        code: result.code
+      }
     }
   }
 }

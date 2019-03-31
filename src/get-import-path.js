@@ -1,17 +1,12 @@
 const resolve = require('browser-resolve')
+const path = require('path')
 
-const isBareImport = require('./is-bare-import.js')
+const isBareImport = (value) => !value.startsWith('.') && !value.startsWith('/')
 
-module.exports = (value, browser, directories) => {
-  if (!isBareImport(value)) return value
+module.exports = (dir, value, browser) => {
+  if (!isBareImport(value)) return path.join(path.dirname(dir), value)
 
   const resolved = resolve.sync(value, {browser}) || resolve.sync(value)
 
-  for (const directory of directories) {
-    if (resolved.startsWith(directory)) {
-      return resolved.substring(directory.length)
-    }
-  }
-
-  return resolved
+  return resolved.substring(process.cwd().length)
 }

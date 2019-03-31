@@ -10,7 +10,6 @@ module.exports = (args) => {
     js: jsAsset(args)
   }
   const cwd = process.cwd()
-  const directories = [cwd, path.join(cwd, args.src)]
 
   const traverse = (nodes, cb = () => {}) => {
     const promises = []
@@ -50,44 +49,43 @@ module.exports = (args) => {
   }
 
   return {
-    async detect(code) {
-      const ast = parse5.parse(String(code))
-
-      const results = []
-
-      await Promise.all(traverse(ast.childNodes || [], async (obj, inline, type) => {
-        if (inline) {
-          results.push(obj.value)
-        } else if (assets[type]) {
-          results.push(...await assets[type].detect(obj.value))
-        }
-      }))
-
-      return results
-    },
     src: args.src,
     extensions: ['.html', '.htm'],
     contentType: 'text/html',
     async transform(from, code) {
       const ast = parse5.parse(String(code))
+      const dependencies = []
 
       await Promise.all(traverse(ast.childNodes || [], async (obj, inline, type) => {
         if (inline) {
+          let importPath
+
           if (type === 'css') {
-            obj.value = getImportPath(obj.value, 'style', directories)
+            importPath = getImportPath(from, obj.value, 'style')
           }
 
           if (type === 'js') {
-            obj.value = getImportPath(obj.value, 'module', directories)
+            importPath = getImportPath(from, obj.value, 'module')
           }
+
+          dependencies.push(importPath)
+
+          obj.value = importPath
         } else if (assets[type]) {
           const value = obj.value
 
-          obj.value = await assets[type].transform(from, value)
+          const transformed = await assets[type].transform(from, value)
+
+          obj.value = transformed.code
+
+          dependencies.push(...transformed.dependencies)
         }
       }))
 
-      return parse5.serialize(ast)
+      return {
+        dependencies,
+        code: parse5.serialize(ast)
+      }
     }
   }
 }
