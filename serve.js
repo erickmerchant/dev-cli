@@ -159,6 +159,9 @@ module.exports = ({console}) => async (args, cb = noop) => {
           stream.respond({[HTTP2_HEADER_STATUS]: result.statusCode, ...result.headers})
 
           if (result.stream) result.stream.pipe(stream)
+          else {
+            stream.end()
+          }
         }
       })
 
@@ -185,11 +188,17 @@ module.exports = ({console}) => async (args, cb = noop) => {
 
     const result = await respond(pathname, prefersHTML, ifNoneMatch)
 
-    res.writeHead(result.statusCode, result.headers)
+    if (!res.destroyed) {
+      res.writeHead(result.statusCode, result.headers)
 
-    if (result.stream) result.stream.pipe(res)
+      if (result.stream) {
+        result.stream.pipe(res)
 
-    push(pathname, res)
+        push(pathname, res)
+      } else {
+        res.end()
+      }
+    }
   })
 
   app.listen(args.port, (err) => {
