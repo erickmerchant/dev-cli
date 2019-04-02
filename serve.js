@@ -51,16 +51,16 @@ module.exports = ({console}) => async (args, cb = noop) => {
   const encode = (stream, encoding) => {
     switch (encoding) {
       case 'br':
-      stream = stream.pipe(zlib.createBrotliCompress())
-      break
+        stream = stream.pipe(zlib.createBrotliCompress())
+        break
 
       case 'gzip':
-      stream = stream.pipe(zlib.createGzip())
-      break
+        stream = stream.pipe(zlib.createGzip())
+        break
 
       case 'deflate':
-      stream = stream.pipe(zlib.createDeflate())
-      break
+        stream = stream.pipe(zlib.createDeflate())
+        break
     }
 
     return stream
