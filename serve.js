@@ -5,6 +5,7 @@ const {
   HTTP2_HEADER_STATUS,
   HTTP2_HEADER_CONTENT_TYPE
 } = http2.constants
+const zlib = require('zlib')
 const mime = require('mime-types')
 const accepts = require('accepts')
 const {gray} = require('kleur')
@@ -35,6 +36,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
   const dependencies = []
 
   const app = createSecureServer({
+    allowHTTP1: true,
     key: fs.readFileSync(path.join(__dirname, './storage/key.pem')),
     cert: fs.readFileSync(path.join(__dirname, './storage/cert.pem'))
   })
@@ -45,12 +47,13 @@ module.exports = ({console}) => async (args, cb = noop) => {
     }
   }
 
-  const respond = async (pathname, prefersHTML, ifNoneMatch) => {
+  const respond = async (pathname, req) => {
     const result = {}
 
     try {
       let file = path.join(cwd, args.src, pathname)
       let stat = await getStat(file)
+      const reqAccepts = accepts(req)
 
       if (!stat && dependencies.includes(pathname)) {
         file = path.join(cwd, pathname)
@@ -58,7 +61,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
         stat = await getStat(file)
       }
 
-      if (!stat && prefersHTML) {
+      if (!stat && req != null && reqAccepts.type(['txt', 'html']) === 'html') {
         file = path.join(cwd, args.src, 'index.html')
 
         stat = await getStat(file)
@@ -72,7 +75,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
 
       const etag = `W/"${stat.size.toString(16)}-${stat.mtime.getTime().toString(16)}"`
 
-      if (ifNoneMatch === etag) {
+      if (req.headers['if-none-match'] === etag) {
         result.statusCode = 304
 
         return result
@@ -126,6 +129,26 @@ module.exports = ({console}) => async (args, cb = noop) => {
         [HTTP2_HEADER_CONTENT_TYPE]: mime.contentType(path.extname(file))
       }
 
+      switch (reqAccepts.encoding(['br', 'gzip', 'defalt'])) {
+        case 'br':
+        stream = stream.pipe(zlib.createBrotliCompress())
+
+        result.headers['Content-Encoding'] = 'br'
+        break
+
+        case 'gzip':
+        stream = stream.pipe(zlib.createGzip())
+
+        result.headers['Content-Encoding'] = 'gzip'
+        break
+
+        case 'deflate':
+        stream = stream.pipe(zlib.createDeflate())
+
+        result.headers['Content-Encoding'] = 'deflate'
+        break
+      }
+
       result.stream = stream
     } catch (err) {
       error(err)
@@ -136,7 +159,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
     return result
   }
 
-  const push = (pathname, res) => {
+  const push = (pathname, res, req) => {
     if (referers[pathname] == null) return
 
     for (const path of referers[pathname]) {
@@ -153,7 +176,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
           error(err)
         })
 
-        const result = await respond(path, false)
+        const result = await respond(path, req)
 
         if (!stream.destroyed) {
           stream.respond({[HTTP2_HEADER_STATUS]: result.statusCode, ...result.headers})
@@ -165,7 +188,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
         }
       })
 
-      push(path, res)
+      push(path, res, req)
     }
   }
 
@@ -173,8 +196,6 @@ module.exports = ({console}) => async (args, cb = noop) => {
 
   app.on('request', async (req, res) => {
     const pathname = url.parse(req.url).pathname
-    const prefersHTML = accepts(req).type(['txt', 'html']) === 'html'
-    const ifNoneMatch = req.headers['if-none-match']
 
     if (req.headers.referer != null) {
       const referer = url.parse(req.headers.referer).pathname
@@ -186,7 +207,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
       referers[referer].push(pathname)
     }
 
-    const result = await respond(pathname, prefersHTML, ifNoneMatch)
+    const result = await respond(pathname, req)
 
     if (!res.destroyed) {
       res.writeHead(result.statusCode, result.headers)
@@ -194,7 +215,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
       if (result.stream) {
         result.stream.pipe(res)
 
-        push(pathname, res)
+        push(pathname, res, req)
       } else {
         res.end()
       }
