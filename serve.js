@@ -112,7 +112,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
         }
       }
 
-      const cacheFile = `${pathname}/${stat.size.toString(16)}-${stat.mtime.getTime().toString(16)}${encoding ? `/${encoding}` : ''}`
+      const cacheFile = `${stat.size.toString(16)}-${stat.mtime.getTime().toString(16)}/${pathname !== '/' ? pathname : 'index.html'}${encoding ? `.${encoding}` : ''}`
       const cacheFull = path.join(cacheDir, cacheFile)
       const cacheExists = await getStat(cacheFull)
       let stream
@@ -188,7 +188,10 @@ module.exports = ({console}) => async (args, cb = noop) => {
         const result = await respond(path, req)
 
         if (!stream.destroyed) {
-          stream.respond({[HTTP2_HEADER_STATUS]: result.statusCode, ...result.headers})
+          stream.respond({
+            ...result.headers,
+            [HTTP2_HEADER_STATUS]: result.statusCode
+          })
 
           if (result.stream) result.stream.pipe(stream)
           else {
