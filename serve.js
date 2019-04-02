@@ -8,6 +8,7 @@ const {
 const zlib = require('zlib')
 const mime = require('mime-types')
 const accepts = require('accepts')
+const compressible = require('compressible')
 const {gray} = require('kleur')
 const path = require('path')
 const url = require('url')
@@ -47,6 +48,24 @@ module.exports = ({console}) => async (args, cb = noop) => {
     }
   }
 
+  const encode = (stream, encoding) => {
+    switch (encoding) {
+      case 'br':
+      stream = stream.pipe(zlib.createBrotliCompress())
+      break
+
+      case 'gzip':
+      stream = stream.pipe(zlib.createGzip())
+      break
+
+      case 'deflate':
+      stream = stream.pipe(zlib.createDeflate())
+      break
+    }
+
+    return stream
+  }
+
   const respond = async (pathname, req) => {
     const result = {}
 
@@ -81,7 +100,8 @@ module.exports = ({console}) => async (args, cb = noop) => {
         return result
       }
 
-      let stream = fs.createReadStream(file)
+      const type = mime.contentType(path.extname(file))
+      const encoding = compressible(type) ? reqAccepts.encoding(['br', 'gzip', 'defalt']) : false
       let transform
 
       for (const asset of assets) {
@@ -92,16 +112,19 @@ module.exports = ({console}) => async (args, cb = noop) => {
         }
       }
 
-      if (transform) {
-        const source = await streamPromise(stream)
+      const cacheFile = `${pathname}/${stat.size.toString(16)}-${stat.mtime.getTime().toString(16)}${encoding ? `/${encoding}` : ''}`
+      const cacheFull = path.join(cacheDir, cacheFile)
+      const cacheExists = await getStat(cacheFull)
+      let stream
 
-        const cacheFile = `${pathname}/${stat.size.toString(16)}-${stat.mtime.getTime().toString(16)}`
-        const cacheFull = path.join(cacheDir, cacheFile)
-        const cacheExists = await getStat(cacheFull)
+      if (cacheExists) {
+        stream = fs.createReadStream(cacheFull)
+      } else {
+        stream = fs.createReadStream(file)
 
-        if (cacheExists) {
-          stream = fs.createReadStream(cacheFull)
-        } else {
+        let source = await streamPromise(stream)
+
+        if (transform) {
           const transformed = await transform(pathname, source)
 
           const filtered = transformed.dependencies.filter((dep) => !dependencies.includes(dep))
@@ -110,43 +133,29 @@ module.exports = ({console}) => async (args, cb = noop) => {
             dependencies.push(...filtered)
           }
 
-          await makeDir(path.dirname(cacheFull))
-
-          const writeStream = fs.createWriteStream(cacheFull)
-
-          writeStream.end(transformed.code)
-
-          await streamPromise(writeStream)
-
-          stream = toReadableStream(transformed.code)
+          source = transformed.code
         }
+
+        stream = toReadableStream(source)
+
+        stream = encode(stream, encoding)
+
+        await makeDir(path.dirname(cacheFull))
+
+        const writeStream = fs.createWriteStream(cacheFull)
+
+        stream.pipe(writeStream)
       }
 
       result.statusCode = 200
 
       result.headers = {
         etag,
-        [HTTP2_HEADER_CONTENT_TYPE]: mime.contentType(path.extname(file))
+        [HTTP2_HEADER_CONTENT_TYPE]: type
       }
 
-      switch (reqAccepts.encoding(['br', 'gzip', 'defalt'])) {
-        case 'br':
-        stream = stream.pipe(zlib.createBrotliCompress())
-
-        result.headers['Content-Encoding'] = 'br'
-        break
-
-        case 'gzip':
-        stream = stream.pipe(zlib.createGzip())
-
-        result.headers['Content-Encoding'] = 'gzip'
-        break
-
-        case 'deflate':
-        stream = stream.pipe(zlib.createDeflate())
-
-        result.headers['Content-Encoding'] = 'deflate'
-        break
+      if (encoding) {
+        result.headers['Content-Encoding'] = encoding
       }
 
       result.stream = stream
