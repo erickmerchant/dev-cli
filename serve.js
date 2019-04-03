@@ -3,8 +3,18 @@ const createSecureServer = http2.createSecureServer
 const {
   HTTP2_HEADER_PATH,
   HTTP2_HEADER_STATUS,
-  HTTP2_HEADER_CONTENT_TYPE
+  HTTP2_HEADER_CONTENT_TYPE,
+  HTTP2_HEADER_IF_NONE_MATCH,
+  HTTP2_HEADER_ETAG,
+  HTTP2_HEADER_CONTENT_ENCODING,
+  HTTP2_HEADER_REFERER,
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_NOT_FOUND,
+  HTTP_STATUS_NOT_MODIFIED,
+  HTTP_STATUS_OK
 } = http2.constants
+const ERR_HTTP2_STREAM_ERROR = 'ERR_HTTP2_STREAM_ERROR'
+const ERR_HTTP2_INVALID_STREAM = 'ERR_HTTP2_INVALID_STREAM'
 const zlib = require('zlib')
 const mime = require('mime-types')
 const accepts = require('accepts')
@@ -17,7 +27,7 @@ const streamPromise = require('stream-to-promise')
 const toReadableStream = require('to-readable-stream')
 const del = require('del')
 const makeDir = require('make-dir')
-const cacheDir = require('find-cache-dir')({name: 'dev'}) || '.cache'
+const findCacheDir = require('find-cache-dir')
 const htmlAsset = require('./src/html-asset.js')
 const cssAsset = require('./src/css-asset.js')
 const jsAsset = require('./src/js-asset.js')
@@ -26,6 +36,8 @@ const cwd = process.cwd()
 const noop = () => {}
 
 module.exports = ({console}) => async (args, cb = noop) => {
+  const cacheDir = findCacheDir({name: 'dev'}) || '.cache'
+
   await del([cacheDir])
 
   const assets = [
@@ -43,7 +55,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
   })
 
   const error = (err) => {
-    if (!['ERR_HTTP2_STREAM_ERROR', 'ERR_HTTP2_INVALID_STREAM'].includes(err.code)) {
+    if (![ERR_HTTP2_STREAM_ERROR, ERR_HTTP2_INVALID_STREAM].includes(err.code)) {
       console.log(err)
     }
   }
@@ -87,15 +99,15 @@ module.exports = ({console}) => async (args, cb = noop) => {
       }
 
       if (!stat) {
-        result.statusCode = 404
+        result.statusCode = HTTP_STATUS_NOT_FOUND
 
         return result
       }
 
       const etag = `W/"${stat.size.toString(16)}-${stat.mtime.getTime().toString(16)}"`
 
-      if (req.headers['if-none-match'] === etag) {
-        result.statusCode = 304
+      if (req.headers[HTTP2_HEADER_IF_NONE_MATCH] === etag) {
+        result.statusCode = HTTP_STATUS_NOT_MODIFIED
 
         return result
       }
@@ -147,22 +159,22 @@ module.exports = ({console}) => async (args, cb = noop) => {
         stream.pipe(writeStream)
       }
 
-      result.statusCode = 200
+      result.statusCode = HTTP_STATUS_OK
 
       result.headers = {
-        etag,
+        [HTTP2_HEADER_ETAG]: etag,
         [HTTP2_HEADER_CONTENT_TYPE]: type
       }
 
       if (encoding) {
-        result.headers['Content-Encoding'] = encoding
+        result.headers[HTTP2_HEADER_CONTENT_ENCODING] = encoding
       }
 
       result.stream = stream
     } catch (err) {
       error(err)
 
-      result.statusCode = 500
+      result.statusCode = HTTP_STATUS_INTERNAL_SERVER_ERROR
     }
 
     return result
@@ -209,8 +221,8 @@ module.exports = ({console}) => async (args, cb = noop) => {
   app.on('request', async (req, res) => {
     const pathname = url.parse(req.url).pathname
 
-    if (req.headers.referer != null) {
-      const referer = url.parse(req.headers.referer).pathname
+    if (req.headers[HTTP2_HEADER_REFERER] != null) {
+      const referer = url.parse(req.headers[HTTP2_HEADER_REFERER]).pathname
 
       if (referers[referer] == null) {
         referers[referer] = []
