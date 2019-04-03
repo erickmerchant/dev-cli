@@ -22,7 +22,7 @@ test('serve.js - good response', async (t) => {
 
   const port = await getPort()
 
-  require('./serve')(noopDeps)({port, src: './fixtures/'}, async (err, app) => {
+  require('./serve.js')(noopDeps)({port, src: './fixtures/'}, async (err, app) => {
     t.error(err)
 
     try {
@@ -73,7 +73,7 @@ test('serve.js - output', async (t) => {
 
   const port = await getPort()
 
-  require('./serve')({console})({port, src: './fixtures/'}, async (err, app) => {
+  require('./serve.js')({console})({port, src: './fixtures/'}, async (err, app) => {
     t.error(err)
 
     try {
