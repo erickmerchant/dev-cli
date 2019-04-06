@@ -23,7 +23,7 @@
     "@erickmerchant/lint": "^2.2.0",
     "eslint": "^5.16.0",
     "execa": "^1.0.0",
-    "get-port": "^4.2.0",
+    "get-port": "^5.0.0",
     "tape": "^4.10.0"
   },
   "dependencies": {
@@ -47,7 +47,7 @@
     "postcss-value-parser": "^3.3.1",
     "sergeant": "^25.0.0",
     "stream-to-promise": "^2.2.0",
-    "to-readable-stream": "^2.0.0"
+    "to-readable-stream": "^2.1.0"
   },
   "engines": {
     "node": ">=8"
