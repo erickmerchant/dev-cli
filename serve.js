@@ -49,8 +49,8 @@ module.exports = ({console}) => async (args, cb = noop) => {
   const dependencies = []
 
   const app = createSecureServer({
-    key: fs.readFileSync(path.join(__dirname, './storage/key.pem')),
-    cert: fs.readFileSync(path.join(__dirname, './storage/cert.pem'))
+    key: fs.readFileSync(path.join(__dirname, './storage/test.key')),
+    cert: fs.readFileSync(path.join(__dirname, './storage/test.cert'))
   })
 
   const error = (err) => {

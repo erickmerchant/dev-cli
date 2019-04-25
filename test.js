@@ -27,7 +27,7 @@ test('serve.js - good response', async (t) => {
 
     try {
       const client = http2.connect(`https://localhost:${port}`, {
-        ca: fs.readFileSync(path.join(__dirname, './storage/cert.pem'))
+        ca: fs.readFileSync(path.join(__dirname, './storage/test.cert'))
       })
 
       client.on('error', (err) => console.error(err))
@@ -78,7 +78,7 @@ test('serve.js - output', async (t) => {
 
     try {
       const client = http2.connect(`https://localhost:${port}`, {
-        ca: fs.readFileSync(path.join(__dirname, './storage/cert.pem'))
+        ca: fs.readFileSync(path.join(__dirname, './storage/test.cert'))
       })
 
       client.on('error', (err) => console.error(err))
