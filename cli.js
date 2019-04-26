@@ -4,7 +4,9 @@ const {command, start} = require('sergeant')('dev')
 const serve = require('./serve.js')
 const cache = require('./cache.js')
 
-command(['serve'], ({option, parameter}) => {
+command(['serve'], ({option, parameter, description}) => {
+  description('start a server')
+
   parameter({
     name: 'src',
     description: 'where to serve files from',
@@ -32,7 +34,9 @@ command(['serve'], ({option, parameter}) => {
   return (args) => serve({console})(args)
 })
 
-command(['cache'], ({option, parameter}) => {
+command(['cache'], ({option, parameter, description}) => {
+  description('cache responses')
+
   parameter({
     name: 'src',
     description: 'where to cache files from',
