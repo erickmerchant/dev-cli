@@ -9,5 +9,5 @@ Install npm packages that use JS modules. Write your code referencing bare impor
 Install it globally or just use npx.
 
 ```
-npx @erickmerchant/checkup --help
+npx @erickmerchant/dev-cli --help
 ```
