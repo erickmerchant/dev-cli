@@ -24,7 +24,7 @@
     "eslint": "^5.16.0",
     "execa": "^1.0.0",
     "get-port": "^5.0.0",
-    "tape": "^4.10.0"
+    "tape": "^4.10.2"
   },
   "dependencies": {
     "@babel/core": "^7.4.5",
