@@ -45,7 +45,7 @@
     "make-dir": "^3.0.0",
     "mime-types": "^2.1.24",
     "parse5": "^5.1.0",
-    "postcss": "^7.0.16",
+    "postcss": "^7.0.17",
     "postcss-preset-env": "^6.5.0",
     "postcss-value-parser": "^4.0.0",
     "sergeant": "^26.1.1",
