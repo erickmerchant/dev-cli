@@ -21,7 +21,7 @@
   "homepage": "https://github.com/erickmerchant/dev-cli#readme",
   "devDependencies": {
     "@erickmerchant/lint": "^2.4.1",
-    "eslint": "^5.16.0",
+    "eslint": "^6.0.0",
     "execa": "^1.0.0",
     "get-port": "^5.0.0",
     "tape": "^4.10.2"
