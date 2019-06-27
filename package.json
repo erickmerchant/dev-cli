@@ -20,9 +20,9 @@
   },
   "homepage": "https://github.com/erickmerchant/dev-cli#readme",
   "devDependencies": {
-    "@erickmerchant/lint": "^2.5.0",
-    "eslint": "^5.16.0",
-    "execa": "^1.0.0",
+    "@erickmerchant/lint": "^3.0.0",
+    "eslint": "^6.0.1",
+    "execa": "^2.0.1",
     "get-port": "^5.0.0",
     "tape": "^4.10.2"
   },
@@ -48,7 +48,7 @@
     "postcss": "^7.0.17",
     "postcss-preset-env": "^6.5.0",
     "postcss-value-parser": "^4.0.0",
-    "sergeant": "^26.1.2",
+    "sergeant": "^26.1.3",
     "stream-to-promise": "^2.2.0",
     "to-readable-stream": "^2.1.0"
   },
