@@ -1,3 +1,5 @@
+/* eslint-disable require-atomic-updates */
+
 const createServer = require('http').createServer
 const mime = require('mime-types')
 const accepts = require('accepts')

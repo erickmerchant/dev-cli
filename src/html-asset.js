@@ -1,3 +1,5 @@
+/* eslint-disable require-atomic-updates */
+
 const path = require('path')
 const parse5 = require('parse5')
 const getImportPath = require('./get-import-path.js')
