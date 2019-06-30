@@ -39,7 +39,7 @@
     "detective-es6": "^2.1.0",
     "detective-postcss": "^3.0.1",
     "find-cache-dir": "^3.0.0",
-    "globby": "^9.2.0",
+    "globby": "^10.0.0",
     "got": "^9.6.0",
     "kleur": "^3.0.3",
     "make-dir": "^3.0.0",
