@@ -22,7 +22,7 @@
   "devDependencies": {
     "@erickmerchant/lint": "^3.0.1",
     "eslint": "^6.0.1",
-    "execa": "^2.0.1",
+    "execa": "^2.0.2",
     "get-port": "^5.0.0",
     "tape": "^4.11.0"
   },
