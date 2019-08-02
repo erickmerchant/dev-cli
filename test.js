@@ -63,7 +63,7 @@ test('serve.js - output', async (t) => {
 
     app.close(() => {
       t.deepEqual(output, [
-        `${gray('[dev]')} server is listening at port ${port}`
+        `${gray('[dev]')} go to http://localhost:${port}`
       ])
     })
   })

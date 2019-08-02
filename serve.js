@@ -107,7 +107,7 @@ module.exports = ({console}) => async (args, cb = noop) => {
     if (err) {
       error(err)
     } else {
-      console.log(`${gray('[dev]')} server is listening at port ${args.port}`)
+      console.log(`${gray('[dev]')} go to http://localhost:${args.port}`)
     }
 
     cb(err, app)
