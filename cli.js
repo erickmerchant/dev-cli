@@ -29,7 +29,7 @@ command(['serve'], ({option, parameter}) => {
     alias: 'd'
   })
 
-  return (args) => serve({console})(args)
+  return serve
 })
 
 command(['cache'], ({option, parameter}) => {
@@ -57,7 +57,7 @@ command(['cache'], ({option, parameter}) => {
     alias: 'd'
   })
 
-  return (args) => cache({console})(args)
+  return cache
 })
 
 start(process.argv.slice(2))

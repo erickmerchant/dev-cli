@@ -18,10 +18,11 @@ const cssAsset = require('./src/css-asset.js')
 const jsAsset = require('./src/js-asset.js')
 const getStat = require('./src/get-stat.js')
 const cacheTransform = require('./src/cache-transform.js')
+const {console} = require('./src/globals.js')
 const cwd = process.cwd()
 const noop = () => {}
 
-module.exports = ({console}) => async (args, cb = noop) => {
+module.exports = async (args, cb = noop) => {
   await del([cacheDir])
 
   const assets = [
