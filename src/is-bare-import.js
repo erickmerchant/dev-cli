@@ -1,1 +1,1 @@
-module.exports = (value) => !value.startsWith('.') && !value.startsWith('/')
+module.exports = (value) => !value.startsWith('http://') && !value.startsWith('https://') && !value.startsWith('.') && !value.startsWith('/')
