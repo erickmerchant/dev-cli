@@ -4,60 +4,49 @@ const {command, start} = require('sergeant')('dev')
 const serve = require('./serve.js')
 const cache = require('./cache.js')
 
-command(['serve'], ({option, parameter}) => {
-  parameter({
-    name: 'src',
-    description: 'where to serve files from',
-    required: true,
-    type(val) {
-      return val
-    }
-  })
-
-  option({
-    name: 'port',
-    description: 'the port to listen at',
-    type(val = 3000) {
-      return val ? Number(val) : null
+command({
+  name: 'serve',
+  signature: ['src'],
+  options: {
+    src: {
+      description: 'where to serve files from',
+      required: true,
+      parameter: true
     },
-    alias: 'p'
-  })
-
-  option({
-    name: 'dev',
-    description: 'run in dev mode',
-    alias: 'd'
-  })
-
-  return serve
+    port: {
+      description: 'the port to listen at',
+      default: 3000,
+      parameter: true
+    },
+    dev: {
+      description: 'run in dev mode'
+    },
+    p: 'port',
+    d: 'dev'
+  },
+  action: serve
 })
 
-command(['cache'], ({option, parameter}) => {
-  parameter({
-    name: 'src',
-    description: 'where to cache files from',
-    required: true,
-    type(val) {
-      return val
-    }
-  })
-
-  parameter({
-    name: 'dist',
-    description: 'where to cache files to',
-    required: true,
-    type(val) {
-      return val
-    }
-  })
-
-  option({
-    name: 'dev',
-    description: 'run in dev mode',
-    alias: 'd'
-  })
-
-  return cache
+command({
+  name: 'cache',
+  signature: ['src', 'dist'],
+  options: {
+    src: {
+      description: 'where to cache files from',
+      required: true,
+      parameter: true
+    },
+    dist: {
+      description: 'where to cache files to',
+      required: true,
+      parameter: true
+    },
+    dev: {
+      description: 'run in dev mode'
+    },
+    d: 'dev'
+  },
+  action: cache
 })
 
 start(process.argv.slice(2))
