@@ -18,7 +18,7 @@ module.exports = (args) => {
     contentType: 'text/css',
     async transform(from, code) {
       const result = await postcss([
-        presetEnv({overrideBrowserslist: browsers}),
+        presetEnv({browsers}),
         cssnano({preset: 'default'}),
         (root, result) => {
           root.walkAtRules((rule, b) => {
