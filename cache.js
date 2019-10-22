@@ -1,12 +1,11 @@
 const path = require('path')
 const {gray} = require('kleur')
 const fs = require('fs')
-const promisify = require('util').promisify
 const makeDir = require('make-dir')
 const globby = require('globby')
 const streamPromise = require('stream-to-promise')
 const createWriteStream = fs.createWriteStream
-const readFile = promisify(fs.readFile)
+const createReadStream = fs.createReadStream
 const htmlAsset = require('./src/html-asset.js')
 const cssAsset = require('./src/css-asset.js')
 const jsAsset = require('./src/js-asset.js')
@@ -44,7 +43,10 @@ module.exports = async (args) => {
       }
     }
 
-    let result = await readFile(file)
+    let result = await streamPromise(createReadStream(file, 'utf8'))
+
+    result = String(result)
+
     const asset = assets.find((a) => a.extensions.includes(path.extname(relative)))
 
     if (asset != null) {
