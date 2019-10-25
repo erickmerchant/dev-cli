@@ -1,11 +1,12 @@
 const path = require('path')
 const {gray} = require('kleur')
+const {promisify} = require('util')
 const fs = require('fs')
-const makeDir = require('make-dir')
 const globby = require('globby')
 const streamPromise = require('stream-to-promise')
 const createWriteStream = fs.createWriteStream
 const createReadStream = fs.createReadStream
+const mkdir = promisify(fs.mkdir)
 const htmlAsset = require('./src/html-asset.js')
 const cssAsset = require('./src/css-asset.js')
 const jsAsset = require('./src/js-asset.js')
@@ -53,7 +54,7 @@ module.exports = async (args) => {
       result = await asset.transform(`/${relative}`, result)
     }
 
-    await makeDir(path.dirname(newPath))
+    await mkdir(path.dirname(newPath), {recursive: true})
 
     const stream = createWriteStream(newPath)
     const dependencies = []

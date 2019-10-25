@@ -1,9 +1,10 @@
 const crypto = require('crypto')
 const path = require('path')
+const {promisify} = require('util')
 const fs = require('fs')
+const mkdir = promisify(fs.mkdir)
 const streamToPromise = require('stream-to-promise')
 const toReadableStream = require('to-readable-stream')
-const makeDir = require('make-dir')
 const getStat = require('./get-stat.js')
 
 module.exports = async ({cacheDir, transform, code, from}) => {
@@ -19,7 +20,7 @@ module.exports = async ({cacheDir, transform, code, from}) => {
 
   const result = await transform(from, code)
 
-  await makeDir(path.dirname(cacheFile))
+  await mkdir(path.dirname(cacheFile), {recursive: true})
 
   const stream = fs.createWriteStream(cacheFile)
 
