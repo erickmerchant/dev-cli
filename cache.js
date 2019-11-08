@@ -21,7 +21,7 @@ module.exports = async (args) => {
     jsAsset(args)
   ]
 
-  const files = await globby([path.join(args.src, '**/*')], {dot: true})
+  const files = await globby([path.join(args.src, '**/*')])
 
   const copied = []
   const cacheFile = async (relative) => {
