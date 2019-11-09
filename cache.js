@@ -3,7 +3,8 @@ const {gray} = require('kleur')
 const {promisify} = require('util')
 const fs = require('fs')
 const globby = require('globby')
-const streamPromise = require('stream-to-promise')
+const stream = require('stream')
+const finished = promisify(stream.finished)
 const createWriteStream = fs.createWriteStream
 const createReadStream = fs.createReadStream
 const mkdir = promisify(fs.mkdir)
@@ -44,9 +45,15 @@ module.exports = async (args) => {
       }
     }
 
-    let result = await streamPromise(createReadStream(file, 'utf8'))
+    const resultStream = createReadStream(file)
 
-    result = String(result)
+    let result = []
+
+    for await (const chunk of resultStream) {
+      result.push(chunk)
+    }
+
+    result = Buffer.concat(result)
 
     const asset = assets.find((a) => a.extensions.includes(path.extname(relative)))
 
@@ -78,7 +85,7 @@ module.exports = async (args) => {
     stream.end(result)
 
     await Promise.all([
-      streamPromise(stream).then(() => {
+      finished(stream).then(() => {
         console.log(`${gray('[dev]')} copied ${relative}`)
       }),
       ...dependencies.map(cacheFile)

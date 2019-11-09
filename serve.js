@@ -10,7 +10,6 @@ const path = require('path')
 const url = require('url')
 const error = require('sergeant/error')
 const fs = require('fs')
-const streamToPromise = require('stream-to-promise')
 const del = require('del')
 const cacheDir = require('find-cache-dir')({name: 'dev'}) || '.cache'
 const htmlAsset = require('./src/html-asset.js')
@@ -84,7 +83,13 @@ module.exports = async (args, cb = noop) => {
       }
 
       if (transform) {
-        const code = await streamToPromise(stream)
+        let code = []
+
+        for await (const chunk of stream) {
+          code.push(chunk)
+        }
+
+        code = Buffer.concat(code)
 
         stream = await cacheTransform({cacheDir, transform, code, from})
       }

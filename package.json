@@ -47,7 +47,6 @@
     "postcss-preset-env": "^6.7.0",
     "postcss-value-parser": "^4.0.2",
     "sergeant": "^27.1.0",
-    "stream-to-promise": "^2.2.0",
     "to-readable-stream": "^2.1.0"
   },
   "engines": {
