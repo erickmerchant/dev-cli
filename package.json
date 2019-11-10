@@ -50,6 +50,6 @@
     "to-readable-stream": "^2.1.0"
   },
   "engines": {
-    "node": ">=10"
+    "node": ">=12"
   }
 }
