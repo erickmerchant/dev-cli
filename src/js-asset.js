@@ -1,11 +1,10 @@
 const babel = require('@babel/core')
 const promisify = require('util').promisify
-const presetEnv = require('@babel/preset-env')
+const presetModules = require('@babel/preset-modules')
 const presetMinify = require('babel-preset-minify')
 const pluginTransformInlineEnvironmentVariables = require('babel-plugin-transform-inline-environment-variables')
 const transform = promisify(babel.transform)
 const getImportPath = require('./get-import-path.js')
-const browsers = require('./browsers.js')
 const path = require('path')
 const detectiveEs6 = require('detective-es6')
 
@@ -24,10 +23,7 @@ module.exports = (args) => {
         sourceMaps: args.dev ? 'inline' : false,
         sourceFileName: from,
         presets: [
-          [presetEnv, {
-            targets: browsers,
-            modules: false
-          }],
+          presetModules,
           [presetMinify, {
             mangle: {
               topLevel: true
