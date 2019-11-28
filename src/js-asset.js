@@ -2,7 +2,6 @@ const babel = require('@babel/core')
 const promisify = require('util').promisify
 const presetModules = require('@babel/preset-modules')
 const presetMinify = require('babel-preset-minify')
-const pluginTransformInlineEnvironmentVariables = require('babel-plugin-transform-inline-environment-variables')
 const transform = promisify(babel.transform)
 const getImportPath = require('./get-import-path.js')
 const path = require('path')
@@ -31,7 +30,6 @@ module.exports = (args) => {
           }]
         ],
         plugins: [
-          pluginTransformInlineEnvironmentVariables,
           () => {
             return {
               visitor: {

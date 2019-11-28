@@ -1,5 +1,5 @@
-const cssnano = require('cssnano')
 const postcss = require('postcss')
+const cssnano = require('cssnano')
 const valueParser = require('postcss-value-parser')
 const getImportPath = require('./get-import-path.js')
 const path = require('path')
