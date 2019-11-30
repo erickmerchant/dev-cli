@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/erickmerchant/dev-cli#readme",
   "devDependencies": {
-    "@erickmerchant/lint": "^3.4.1",
+    "@erickmerchant/lint": "^3.4.2",
     "babel-eslint": "^10.0.3",
     "eslint": "^6.7.1",
     "tape": "^4.11.0"
