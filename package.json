@@ -1,37 +1,13 @@
 {
   "name": "@erickmerchant/dev-cli",
-  "version": "9.1.4",
   "description": "serve modules while developing and then cache responses to deploy to a static server",
+  "version": "9.1.4",
+  "author": "Erick Merchant <erickmerchant@gmail.com>",
   "bin": {
     "dev": "./cli.js"
   },
-  "scripts": {
-    "pretest": "lint '**/*.js'",
-    "test": "tape test.js"
-  },
-  "files": [
-    "LICENSE",
-    "README.md",
-    "src/",
-    "cache.js",
-    "cli.js",
-    "serve.js"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/erickmerchant/dev-cli.git"
-  },
-  "author": "Erick Merchant <erickmerchant@gmail.com>",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/erickmerchant/dev-cli/issues"
-  },
-  "homepage": "https://github.com/erickmerchant/dev-cli#readme",
-  "devDependencies": {
-    "@erickmerchant/lint": "^3.6.2",
-    "babel-eslint": "^10.0.3",
-    "eslint": "^6.7.2",
-    "tape": "^4.12.0"
   },
   "dependencies": {
     "@babel/core": "^7.7.7",
@@ -54,7 +30,31 @@
     "sergeant": "^27.2.1",
     "to-readable-stream": "^2.1.0"
   },
+  "devDependencies": {
+    "@erickmerchant/lint": "^3.6.2",
+    "babel-eslint": "^10.0.3",
+    "eslint": "^6.7.2",
+    "tape": "^4.12.0"
+  },
   "engines": {
     "node": ">=12"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "src/",
+    "cache.js",
+    "cli.js",
+    "serve.js"
+  ],
+  "homepage": "https://github.com/erickmerchant/dev-cli#readme",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erickmerchant/dev-cli.git"
+  },
+  "scripts": {
+    "pretest": "lint '**/*.js'",
+    "test": "tape test.js"
   }
 }
