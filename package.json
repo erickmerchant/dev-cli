@@ -1,13 +1,31 @@
 {
   "name": "@erickmerchant/dev-cli",
-  "description": "serve modules while developing and then cache responses to deploy to a static server",
   "version": "9.1.4",
+  "description": "serve modules while developing and then cache responses to deploy to a static server",
+  "homepage": "https://github.com/erickmerchant/dev-cli#readme",
+  "bugs": {
+    "url": "https://github.com/erickmerchant/dev-cli/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erickmerchant/dev-cli.git"
+  },
+  "license": "ISC",
   "author": "Erick Merchant <erickmerchant@gmail.com>",
+  "files": [
+    "LICENSE",
+    "README.md",
+    "src/",
+    "cache.js",
+    "cli.js",
+    "serve.js"
+  ],
   "bin": {
     "dev": "./cli.js"
   },
-  "bugs": {
-    "url": "https://github.com/erickmerchant/dev-cli/issues"
+  "scripts": {
+    "pretest": "lint '**/*.js'",
+    "test": "tape test.js"
   },
   "dependencies": {
     "@babel/core": "^7.7.7",
@@ -38,23 +56,5 @@
   },
   "engines": {
     "node": ">=12"
-  },
-  "files": [
-    "LICENSE",
-    "README.md",
-    "src/",
-    "cache.js",
-    "cli.js",
-    "serve.js"
-  ],
-  "homepage": "https://github.com/erickmerchant/dev-cli#readme",
-  "license": "ISC",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/erickmerchant/dev-cli.git"
-  },
-  "scripts": {
-    "pretest": "lint '**/*.js'",
-    "test": "tape test.js"
   }
 }
