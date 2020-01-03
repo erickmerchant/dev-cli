@@ -1,6 +1,6 @@
 {
   "name": "@erickmerchant/dev-cli",
-  "version": "9.1.4",
+  "version": "9.1.5",
   "description": "serve modules while developing and then cache responses to deploy to a static server",
   "homepage": "https://github.com/erickmerchant/dev-cli#readme",
   "bugs": {
