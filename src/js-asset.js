@@ -13,7 +13,6 @@ module.exports = (args) => {
 
   return {
     async detect(code) { return detectiveEs6(code) },
-    src: args.src,
     extensions: ['.mjs', '.js'],
     contentType: 'text/javascript',
     async transform(from, code) {

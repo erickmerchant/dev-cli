@@ -11,7 +11,6 @@ module.exports = (args) => {
 
   return {
     async detect(code) { return detectivePostcss(code) },
-    src: args.src,
     extensions: ['.css'],
     contentType: 'text/css',
     async transform(from, code) {

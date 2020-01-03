@@ -67,7 +67,6 @@ module.exports = (args) => {
 
       return results
     },
-    src: args.src,
     extensions: ['.html', '.htm'],
     contentType: 'text/html',
     async transform(from, code) {
