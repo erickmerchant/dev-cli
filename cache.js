@@ -8,11 +8,11 @@ const finished = promisify(stream.finished)
 const createWriteStream = fs.createWriteStream
 const createReadStream = fs.createReadStream
 const mkdir = promisify(fs.mkdir)
-const htmlAsset = require('./src/html-asset.js')
-const cssAsset = require('./src/css-asset.js')
-const jsAsset = require('./src/js-asset.js')
-const getStat = require('./src/get-stat.js')
-const {console} = require('./src/globals.js')
+const htmlAsset = require('./lib/html-asset.js')
+const cssAsset = require('./lib/css-asset.js')
+const jsAsset = require('./lib/js-asset.js')
+const getStat = require('./lib/get-stat.js')
+const {console} = require('./lib/globals.js')
 const cwd = process.cwd()
 
 module.exports = async (args) => {
