@@ -1,7 +1,7 @@
 {
   "name": "@erickmerchant/dev-cli",
   "version": "9.2.0",
-  "description": "serve modules while developing and then cache responses to deploy to a static server",
+  "description": "A development CLI.",
   "homepage": "https://github.com/erickmerchant/dev-cli#readme",
   "bugs": {
     "url": "https://github.com/erickmerchant/dev-cli/issues"
@@ -42,8 +42,8 @@
     "kleur": "^3.0.3",
     "mime-types": "^2.1.26",
     "parse5": "^5.1.1",
-    "postcss": "^7.0.26",
-    "postcss-value-parser": "^4.0.2",
+    "postcss": "^7.0.27",
+    "postcss-value-parser": "^4.0.3",
     "sergeant": "^27.2.2",
     "terser": "^4.6.3",
     "to-readable-stream": "^2.1.0"
