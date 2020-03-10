@@ -38,7 +38,7 @@
     "del": "^5.1.0",
     "detective-es6": "^2.1.0",
     "detective-postcss": "^3.0.1",
-    "find-cache-dir": "^3.3.0",
+    "find-cache-dir": "^3.3.1",
     "globby": "^11.0.0",
     "kleur": "^3.0.3",
     "mime-types": "^2.1.26",
