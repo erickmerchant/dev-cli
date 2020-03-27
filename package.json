@@ -50,7 +50,7 @@
     "to-readable-stream": "^2.1.0"
   },
   "devDependencies": {
-    "@erickmerchant/lint": "^4.1.1",
+    "@erickmerchant/lint": "^4.1.2",
     "babel-eslint": "^10.1.0",
     "tape": "^4.13.2"
   },
