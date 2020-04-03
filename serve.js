@@ -10,6 +10,8 @@ const path = require('path')
 const url = require('url')
 const error = require('sergeant/error')
 const fs = require('fs')
+const finished = promisify(require('stream').finished)
+const unlink = promisify(fs.unlink)
 const del = require('del')
 const cacheDir = require('find-cache-dir')({name: 'dev'}) || '.cache'
 const htmlAsset = require('./lib/html-asset.js')
@@ -33,11 +35,40 @@ module.exports = async (args, cb = noop) => {
   const app = createServer(async (req, res) => {
     try {
       const from = url.parse(req.url).pathname
+      let file = path.join(cwd, args.src, from)
+      let stat = await getStat(file)
 
       await compression(req, res)
 
-      let file = path.join(cwd, args.src, from)
-      let stat = await getStat(file)
+      if (from.endsWith('.json')) {
+        if (req.method === 'POST') {
+          res.statusCode = stat ? 200 : 201
+
+          const writeStream = fs.createWriteStream(file)
+
+          req.pipe(writeStream)
+
+          await finished(writeStream)
+
+          return
+        }
+
+        if (req.method === 'DELETE') {
+          res.statusCode = 200
+
+          await unlink(file)
+
+          return
+        }
+      }
+
+      if (req.method !== 'GET') {
+        res.statusCode = 405
+
+        res.end('')
+
+        return
+      }
 
       if (!stat) {
         file = path.join(cwd, from)
@@ -71,7 +102,8 @@ module.exports = async (args, cb = noop) => {
         return
       }
 
-      let stream = fs.createReadStream(file)
+      let readStream = fs.createReadStream(file)
+
       let transform
 
       for (const asset of assets) {
@@ -85,21 +117,22 @@ module.exports = async (args, cb = noop) => {
       if (transform) {
         let code = []
 
-        for await (const chunk of stream) {
+        for await (const chunk of readStream) {
           code.push(chunk)
         }
 
         code = Buffer.concat(code)
 
-        stream = await cacheTransform({cacheDir, transform, code, from})
+        readStream = await cacheTransform({cacheDir, transform, code, from})
       }
 
-      res.writeHead(200, {
-        etag,
-        'content-type': mime.contentType(path.extname(file))
-      })
+      res.statusCode = 200
 
-      stream.pipe(res)
+      res.setHeader('etag', etag)
+
+      res.setHeader('content-type', mime.contentType(path.extname(file)))
+
+      readStream.pipe(res)
     } catch (err) {
       error(err)
 
