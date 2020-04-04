@@ -10,7 +10,6 @@ const path = require('path')
 const url = require('url')
 const error = require('sergeant/error')
 const fs = require('fs')
-const fstat = promisify(fs.stat)
 const finished = promisify(require('stream').finished)
 const unlink = promisify(fs.unlink)
 const del = require('del')
@@ -35,13 +34,8 @@ module.exports = async (args, cb = noop) => {
 
   const app = createServer(async (req, res) => {
     try {
-      const srcStat = await fstat(args.src)
-
-      const srcDir = srcStat.isDirectory() ? args.src : path.dirname(args.src)
-      const srcFile = srcStat.isFile() ? args.src : path.join(args.src, 'index.html')
-
       const from = url.parse(req.url).pathname
-      let file = path.join(cwd, srcDir, from)
+      let file = path.join(cwd, args.src, from)
       let stat = await getStat(file)
 
       await compression(req, res)
@@ -83,7 +77,7 @@ module.exports = async (args, cb = noop) => {
 
         if (!stat) {
           if (accepts(req).type(['txt', 'html']) === 'html') {
-            file = path.join(cwd, srcFile)
+            file = path.join(cwd, args.src, 'index.html')
 
             stat = await getStat(file)
           }
