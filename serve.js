@@ -34,7 +34,12 @@ module.exports = async (args, cb = noop) => {
 
   const app = createServer(async (req, res) => {
     try {
-      const from = url.parse(req.url).pathname
+      let from = url.parse(req.url).pathname
+
+      if (from.endsWith('/')) {
+        from = `${from}index.html`
+      }
+
       let file = path.join(cwd, args.src, from)
       let stat = await getStat(file)
 
