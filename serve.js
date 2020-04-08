@@ -55,6 +55,8 @@ module.exports = async (args, cb = noop) => {
 
           await finished(writeStream)
 
+          res.end('')
+
           return
         }
 
@@ -62,6 +64,8 @@ module.exports = async (args, cb = noop) => {
           res.statusCode = 200
 
           await unlink(file)
+
+          res.end('')
 
           return
         }
