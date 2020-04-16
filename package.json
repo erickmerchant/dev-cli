@@ -42,7 +42,7 @@
     "globby": "^11.0.0",
     "kleur": "^3.0.3",
     "mime-types": "^2.1.26",
-    "parse5": "^5.1.1",
+    "parse5": "^6.0.0",
     "postcss": "^7.0.27",
     "postcss-value-parser": "^4.0.3",
     "sergeant": "^27.2.2",
