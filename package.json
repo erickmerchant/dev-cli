@@ -41,17 +41,17 @@
     "find-cache-dir": "^3.3.1",
     "globby": "^11.0.0",
     "kleur": "^3.0.3",
-    "mime-types": "^2.1.26",
+    "mime-types": "^2.1.27",
     "parse5": "^6.0.0",
     "postcss": "^7.0.27",
     "postcss-value-parser": "^4.0.3",
     "sergeant": "^27.2.2",
-    "terser": "^4.6.11",
+    "terser": "^4.6.12",
     "to-readable-stream": "^2.1.0"
   },
   "devDependencies": {
     "@erickmerchant/lint": "^4.1.2",
-    "tape": "^4.13.2"
+    "tape": "^5.0.0"
   },
   "engines": {
     "node": ">=12"
