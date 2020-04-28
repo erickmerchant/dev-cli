@@ -33,6 +33,7 @@ module.exports = async (args) => {
     const newPath = path.join(args.dist, relative)
 
     let file = path.join(cwd, args.src, relative)
+
     let stat = await getStat(file)
 
     if (!stat) {
@@ -56,31 +57,21 @@ module.exports = async (args) => {
     result = Buffer.concat(result)
 
     const asset = assets.find((a) => a.extensions.includes(path.extname(relative)))
+    let dependencies = []
 
     if (asset != null) {
-      result = await asset.transform(`/${relative}`, result)
+      result = await asset.transform(`/${relative}`, result, dependencies)
     }
+
+    dependencies = dependencies.map((file) => {
+      if (file.startsWith('/')) return file.substring(1)
+
+      return path.join(path.dirname(relative), file)
+    })
 
     await mkdir(path.dirname(newPath), {recursive: true})
 
     const stream = createWriteStream(newPath)
-    const dependencies = []
-    const promises = []
-
-    for (const asset of assets) {
-      if (asset.extensions.includes(path.extname(relative))) {
-        promises.push(asset.detect(result).then((detected) => {
-          dependencies.push(...detected
-            .map((file) => {
-              if (file.startsWith('/')) return file.substring(1)
-
-              return path.join(path.dirname(relative), file)
-            }))
-        }))
-      }
-    }
-
-    await Promise.all(promises)
 
     stream.end(result)
 
