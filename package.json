@@ -43,7 +43,7 @@
     "parse5": "^6.0.0",
     "postcss": "^7.0.27",
     "postcss-value-parser": "^4.1.0",
-    "sergeant": "^28.0.0",
+    "sergeant": "^28.1.0",
     "terser": "^4.6.13",
     "to-readable-stream": "^2.1.0"
   },
