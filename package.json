@@ -44,8 +44,7 @@
     "postcss": "^7.0.28",
     "postcss-value-parser": "^4.1.0",
     "sergeant": "^28.1.0",
-    "terser": "^4.6.13",
-    "to-readable-stream": "^2.1.0"
+    "terser": "^4.6.13"
   },
   "devDependencies": {
     "@erickmerchant/lint": "^5.0.0",
