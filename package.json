@@ -41,7 +41,7 @@
     "kleur": "^3.0.3",
     "mime-types": "^2.1.27",
     "parse5": "^6.0.0",
-    "postcss": "^7.0.29",
+    "postcss": "^7.0.30",
     "postcss-value-parser": "^4.1.0",
     "sergeant": "^28.1.0",
     "terser": "^4.6.13"
