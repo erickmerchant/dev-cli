@@ -21,8 +21,13 @@ command({
     dev: {
       description: 'run in dev mode'
     },
+    importmap: {
+      description: 'an importmap',
+      parameter: true
+    },
     p: 'port',
-    d: 'dev'
+    d: 'dev',
+    m: 'importmap'
   },
   action: serve
 })
@@ -44,7 +49,12 @@ command({
     dev: {
       description: 'run in dev mode'
     },
-    d: 'dev'
+    importmap: {
+      description: 'an importmap',
+      parameter: true
+    },
+    d: 'dev',
+    m: 'importmap'
   },
   action: cache
 })

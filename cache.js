@@ -13,13 +13,16 @@ const cssAsset = require('./lib/css-asset.js')
 const jsAsset = require('./lib/js-asset.js')
 const getStat = require('./lib/get-stat.js')
 const {console} = require('./lib/globals.js')
+const getResolver = require('./lib/get-resolver.js')
 const cwd = process.cwd()
 
 module.exports = async (args) => {
+  const resolver = await getResolver(args.importmap)
+
   const assets = [
-    htmlAsset(args),
-    cssAsset(args),
-    jsAsset(args)
+    htmlAsset(args, resolver),
+    cssAsset(args, resolver),
+    jsAsset(args, resolver)
   ]
 
   const files = await globby([path.join(args.src, '**/*')])
