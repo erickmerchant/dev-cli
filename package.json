@@ -24,7 +24,6 @@
     "dev": "./cli.js"
   },
   "scripts": {
-    "pretest": "lint '**/*.js'",
     "test": "node test.js"
   },
   "dependencies": {
@@ -42,12 +41,10 @@
     "parse5": "^6.0.0",
     "postcss": "^7.0.30",
     "postcss-value-parser": "^4.1.0",
-    "sergeant": "^28.1.0",
+    "sergeant": "^28.1.1",
     "terser": "^4.6.13"
   },
-  "devDependencies": {
-    "@erickmerchant/lint": "^5.1.0"
-  },
+  "devDependencies": {},
   "engines": {
     "node": ">=14.2"
   }
