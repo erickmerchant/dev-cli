@@ -104,7 +104,9 @@ module.exports = async (args, cb = noop) => {
         }
       }
 
-      const etag = `W/"${stat.size.toString(16)}-${stat.mtime.getTime().toString(16)}"`
+      const etag = `W/"${stat.size.toString(
+        16
+      )}-${stat.mtime.getTime().toString(16)}"`
 
       if (req.headers['if-none-match'] === etag) {
         res.statusCode = 304

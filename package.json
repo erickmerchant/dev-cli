@@ -24,6 +24,7 @@
     "dev": "./cli.js"
   },
   "scripts": {
+    "pretest": "eslint '*.js' 'lib/*.js'",
     "test": "node test.js"
   },
   "dependencies": {
@@ -44,8 +45,69 @@
     "sergeant": "^28.1.1",
     "terser": "^4.6.13"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.1.0",
+    "eslint-plugin-prettier": "^3.1.3",
+    "prettier": "^2.0.5"
+  },
   "engines": {
     "node": ">=14.2"
+  },
+  "eslintConfig": {
+    "parser": "babel-eslint",
+    "parserOptions": {
+      "ecmaVersion": 2020,
+      "sourceType": "module"
+    },
+    "plugins": [
+      "prettier"
+    ],
+    "env": {
+      "browser": true,
+      "node": true,
+      "es6": true
+    },
+    "rules": {
+      "prettier/prettier": "error",
+      "eqeqeq": [
+        "error",
+        "always",
+        {
+          "null": "never"
+        }
+      ],
+      "no-else-return": "error",
+      "no-useless-escape": "error",
+      "no-useless-return": "error",
+      "no-delete-var": "error",
+      "no-undef": "error",
+      "no-unused-vars": [
+        "error",
+        {
+          "vars": "all",
+          "args": "none"
+        }
+      ],
+      "handle-callback-err": "error",
+      "no-path-concat": "error",
+      "no-var": "error",
+      "prefer-arrow-callback": "error",
+      "prefer-const": "error",
+      "prefer-template": "error"
+    }
+  },
+  "prettier": {
+    "arrowParens": "always",
+    "bracketSpacing": false,
+    "htmlWhitespaceSensitivity": "ignore",
+    "printWidth": 80,
+    "proseWrap": "preserve",
+    "quoteProps": "consistent",
+    "semi": false,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "none",
+    "useTabs": false
   }
 }

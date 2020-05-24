@@ -59,7 +59,9 @@ module.exports = async (args) => {
 
     result = Buffer.concat(result)
 
-    const asset = assets.find((a) => a.extensions.includes(path.extname(relative)))
+    const asset = assets.find((a) =>
+      a.extensions.includes(path.extname(relative))
+    )
     let dependencies = []
 
     if (asset != null) {
@@ -86,5 +88,7 @@ module.exports = async (args) => {
     ])
   }
 
-  await Promise.all(files.map((file) => cacheFile(path.relative(args.src, file))))
+  await Promise.all(
+    files.map((file) => cacheFile(path.relative(args.src, file)))
+  )
 }
