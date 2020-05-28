@@ -24,12 +24,12 @@
     "dev": "./cli.js"
   },
   "scripts": {
-    "pretest": "eslint '*.js' 'lib/*.js'",
-    "test": "node test.js"
+    "lint": "eslint '*.js' 'lib/*.js'",
+    "test": "npm run lint"
   },
   "dependencies": {
-    "@babel/core": "^7.10.0",
-    "@babel/preset-env": "^7.10.0",
+    "@babel/core": "^7.10.1",
+    "@babel/preset-env": "^7.10.1",
     "accepts": "^1.3.7",
     "autoprefixer": "^9.8.0",
     "compression": "^1.7.4",
