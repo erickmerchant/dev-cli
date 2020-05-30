@@ -1,5 +1,3 @@
-/* eslint-disable require-atomic-updates */
-
 const createServer = require('http').createServer
 const mime = require('mime-types')
 const accepts = require('accepts')
@@ -50,13 +48,13 @@ module.exports = async (args, cb = noop) => {
 
       if (from.endsWith('.json')) {
         if (req.method === 'POST') {
-          res.statusCode = stat ? 200 : 201
-
           const writeStream = fs.createWriteStream(file)
 
           req.pipe(writeStream)
 
           await finished(writeStream)
+
+          res.writeHead(stat ? 200 : 201)
 
           res.end('')
 
@@ -64,9 +62,9 @@ module.exports = async (args, cb = noop) => {
         }
 
         if (req.method === 'DELETE') {
-          res.statusCode = 200
-
           await unlink(file)
+
+          res.writeHead(200)
 
           res.end('')
 
@@ -75,7 +73,7 @@ module.exports = async (args, cb = noop) => {
       }
 
       if (req.method !== 'GET') {
-        res.statusCode = 405
+        res.writeHead(405)
 
         res.end('')
 
@@ -95,7 +93,7 @@ module.exports = async (args, cb = noop) => {
           }
 
           if (!stat) {
-            res.statusCode = 404
+            res.writeHead(404)
 
             res.end('')
 
@@ -109,7 +107,7 @@ module.exports = async (args, cb = noop) => {
       )}-${stat.mtime.getTime().toString(16)}"`
 
       if (req.headers['if-none-match'] === etag) {
-        res.statusCode = 304
+        res.writeHead(304)
 
         res.end('')
 
@@ -140,17 +138,16 @@ module.exports = async (args, cb = noop) => {
         readStream = await cacheTransform({cacheDir, transform, code, from})
       }
 
-      res.statusCode = 200
-
-      res.setHeader('etag', etag)
-
-      res.setHeader('content-type', mime.contentType(path.extname(file)))
+      res.writeHead(200, {
+        'etag': etag,
+        'content-type': mime.contentType(path.extname(file))
+      })
 
       readStream.pipe(res)
     } catch (err) {
       error(err)
 
-      res.statusCode = 500
+      res.writeHead(500)
 
       res.end('')
     }
