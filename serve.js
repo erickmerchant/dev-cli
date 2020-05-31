@@ -35,115 +35,129 @@ module.exports = async (args, cb = noop) => {
 
   const app = createServer(async (req, res) => {
     try {
-      let from = url.parse(req.url).pathname
+      const from = url.parse(req.url).pathname
 
-      if (from.endsWith('/')) {
-        from = `${from}index.html`
-      }
+      if (req.headers.accept === 'text/event-stream') {
+        res.writeHead(200, {
+          'content-type': 'text/event-stream',
+          'connection': 'keep-alive',
+          'cache-control': 'no-cache'
+        })
 
-      let file = path.join(cwd, args.src, from)
-      let stat = await getStat(file)
+        fs.watch(
+          path.join(cwd, args.src),
+          {recursive: true, persistent: true},
+          (type, file) => {
+            res.write(`data: ${JSON.stringify({type, file})}\n\n`)
+          }
+        )
 
-      await compression(req, res)
+        res.write(`\n\n`)
+      } else {
+        let file = path.join(cwd, args.src, from)
+        let stat = await getStat(file)
 
-      if (from.endsWith('.json')) {
-        if (req.method === 'POST') {
-          const writeStream = fs.createWriteStream(file)
+        await compression(req, res)
 
-          req.pipe(writeStream)
+        if (from.endsWith('.json')) {
+          if (req.method === 'POST') {
+            const writeStream = fs.createWriteStream(file)
 
-          await finished(writeStream)
+            req.pipe(writeStream)
 
-          res.writeHead(stat ? 200 : 201)
+            await finished(writeStream)
 
-          res.end('')
+            res.writeHead(stat ? 200 : 201)
 
-          return
-        }
+            res.end('')
 
-        if (req.method === 'DELETE') {
-          await unlink(file)
-
-          res.writeHead(200)
-
-          res.end('')
-
-          return
-        }
-      }
-
-      if (req.method !== 'GET') {
-        res.writeHead(405)
-
-        res.end('')
-
-        return
-      }
-
-      if (!stat) {
-        file = path.join(cwd, from)
-
-        stat = await getStat(file)
-
-        if (!stat) {
-          if (accepts(req).type(['txt', 'html']) === 'html') {
-            file = path.join(cwd, args.src, 'index.html')
-
-            stat = await getStat(file)
+            return
           }
 
-          if (!stat) {
-            res.writeHead(404)
+          if (req.method === 'DELETE') {
+            await unlink(file)
+
+            res.writeHead(200)
 
             res.end('')
 
             return
           }
         }
-      }
 
-      const etag = `W/"${stat.size.toString(
-        16
-      )}-${stat.mtime.getTime().toString(16)}"`
+        if (req.method !== 'GET') {
+          res.writeHead(405)
 
-      if (req.headers['if-none-match'] === etag) {
-        res.writeHead(304)
+          res.end('')
 
-        res.end('')
-
-        return
-      }
-
-      let readStream = fs.createReadStream(file)
-
-      let transform
-
-      for (const asset of assets) {
-        if (asset.extensions.includes(path.extname(file))) {
-          transform = asset.transform
-
-          break
-        }
-      }
-
-      if (transform) {
-        let code = []
-
-        for await (const chunk of readStream) {
-          code.push(chunk)
+          return
         }
 
-        code = Buffer.concat(code)
+        if (!stat) {
+          file = path.join(cwd, from)
 
-        readStream = await cacheTransform({cacheDir, transform, code, from})
+          stat = await getStat(file)
+
+          if (!stat) {
+            if (accepts(req).type(['txt', 'html']) === 'html') {
+              file = path.join(cwd, args.src, args.entry)
+
+              stat = await getStat(file)
+            }
+
+            if (!stat) {
+              res.writeHead(404)
+
+              res.end('')
+
+              return
+            }
+          }
+        }
+
+        const etag = `W/"${stat.size.toString(
+          16
+        )}-${stat.mtime.getTime().toString(16)}"`
+
+        if (req.headers['if-none-match'] === etag) {
+          res.writeHead(304)
+
+          res.end('')
+
+          return
+        }
+
+        let readStream = fs.createReadStream(file)
+
+        let transform
+
+        for (const asset of assets) {
+          if (asset.extensions.includes(path.extname(file))) {
+            transform = asset.transform
+
+            break
+          }
+        }
+
+        if (transform) {
+          let code = []
+
+          for await (const chunk of readStream) {
+            code.push(chunk)
+          }
+
+          code = Buffer.concat(code)
+
+          readStream = await cacheTransform({cacheDir, transform, code, from})
+        }
+
+        res.writeHead(200, {
+          'etag': etag,
+          'content-type': mime.contentType(path.extname(file))
+        })
+
+        readStream.pipe(res)
       }
-
-      res.writeHead(200, {
-        'etag': etag,
-        'content-type': mime.contentType(path.extname(file))
-      })
-
-      readStream.pipe(res)
     } catch (err) {
       error(err)
 

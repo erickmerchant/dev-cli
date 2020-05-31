@@ -25,9 +25,15 @@ command({
       description: 'an importmap',
       parameter: true
     },
+    entry: {
+      description: 'an alternate html to serve',
+      default: 'index.html',
+      parameter: true
+    },
     p: 'port',
     d: 'dev',
-    m: 'importmap'
+    m: 'importmap',
+    e: 'entry'
   },
   action: serve
 })
