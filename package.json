@@ -18,7 +18,8 @@
     "lib/",
     "cache.js",
     "cli.js",
-    "serve.js"
+    "serve.js",
+    "container.mjs"
   ],
   "bin": {
     "dev": "./cli.js"
