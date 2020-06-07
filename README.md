@@ -1,12 +1,10 @@
 # @erickmerchant/dev-cli
 
-A CLI that can run a development server or build a static site for deployment. Prioritizes speed and simplicity without sacrificing dependency management and using the latest features of javascript.
+A CLI that can run a development server or build a static site for deployment.
 
-Install npm packages that use ES modules. Write your code referencing bare imports (even in your html). Run the serve command and it will modify those imports to work in the browser. ES modules can be referenced by the module property in a package's package.json. Also works with CSS, which can use the style property. Automatically runs babel with @babel/preset-modules. The cache command will save the responses to files to be uploaded to a static host.
-
-## Usage
-
-Install it globally or just use npx.
+- hot module reloading via a server-sent events and a client-side ioc container
+- post and delete json to implement content edit UIs for development
+- uses babel and postcss
 
 ```
 npx @erickmerchant/dev-cli --help
