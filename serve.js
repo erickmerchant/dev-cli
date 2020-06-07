@@ -18,20 +18,13 @@ const jsAsset = require('./lib/js-asset.js')
 const getStat = require('./lib/get-stat.js')
 const cacheTransform = require('./lib/cache-transform.js')
 const {console} = require('./lib/globals.js')
-const getResolver = require('./lib/get-resolver.js')
 const cwd = process.cwd()
 const noop = () => {}
 
 module.exports = async (args, cb = noop) => {
   await del([cacheDir])
 
-  const resolver = await getResolver(args.importmap)
-
-  const assets = [
-    htmlAsset(args, resolver),
-    cssAsset(args, resolver),
-    jsAsset(args, resolver)
-  ]
+  const assets = [htmlAsset(args), cssAsset(args), jsAsset(args)]
 
   const app = createServer(async (req, res) => {
     try {

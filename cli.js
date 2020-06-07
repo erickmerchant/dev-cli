@@ -21,10 +21,6 @@ command({
     dev: {
       description: 'run in dev mode'
     },
-    importmap: {
-      description: 'an importmap',
-      parameter: true
-    },
     entry: {
       description: 'an alternate html to serve',
       default: 'index.html',
@@ -32,7 +28,6 @@ command({
     },
     p: 'port',
     d: 'dev',
-    m: 'importmap',
     e: 'entry'
   },
   action: serve
@@ -55,12 +50,7 @@ command({
     dev: {
       description: 'run in dev mode'
     },
-    importmap: {
-      description: 'an importmap',
-      parameter: true
-    },
-    d: 'dev',
-    m: 'importmap'
+    d: 'dev'
   },
   action: cache
 })
