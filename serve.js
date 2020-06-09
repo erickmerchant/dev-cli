@@ -32,9 +32,9 @@ module.exports = async (args, cb = noop) => {
 
       if (req.headers.accept === 'text/event-stream') {
         res.writeHead(200, {
-          'content-type': 'text/event-stream',
-          'connection': 'keep-alive',
-          'cache-control': 'no-cache'
+          'Content-Type': 'text/event-stream',
+          'Connection': 'keep-alive',
+          'Cache-Control': 'no-cache'
         })
 
         fs.watch(
@@ -60,7 +60,9 @@ module.exports = async (args, cb = noop) => {
 
             await finished(writeStream)
 
-            res.writeHead(stat ? 200 : 201)
+            res.writeHead(stat ? 200 : 201, {
+              'Content-Type': mime.contentType('.json')
+            })
 
             res.end('')
 
@@ -145,8 +147,8 @@ module.exports = async (args, cb = noop) => {
         }
 
         res.writeHead(200, {
-          'etag': etag,
-          'content-type': mime.contentType(path.extname(file))
+          'ETag': etag,
+          'Content-Type': mime.contentType(path.extname(file))
         })
 
         readStream.pipe(res)
