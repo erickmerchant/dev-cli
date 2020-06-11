@@ -9,14 +9,13 @@ const createWriteStream = fs.createWriteStream
 const createReadStream = fs.createReadStream
 const mkdir = promisify(fs.mkdir)
 const htmlAsset = require('./lib/html-asset.js')
-const cssAsset = require('./lib/css-asset.js')
 const jsAsset = require('./lib/js-asset.js')
 const getStat = require('./lib/get-stat.js')
 const {console} = require('./lib/globals.js')
-const cwd = process.cwd()
 
 module.exports = async (args) => {
-  const assets = [htmlAsset(args), cssAsset(args), jsAsset(args)]
+  const {find, list} = await import('./lib/resolver.mjs')
+  const assets = [htmlAsset(args), jsAsset(args)]
 
   const files = await globby([path.join(args.src, '**/*')])
 
@@ -28,18 +27,12 @@ module.exports = async (args) => {
 
     const newPath = path.join(args.dist, relative)
 
-    let file = path.join(cwd, args.src, relative)
+    const file = find(relative, args.src)
 
-    let stat = await getStat(file)
+    const stat = await getStat(file)
 
     if (!stat) {
-      file = path.join(cwd, relative)
-
-      stat = await getStat(file)
-
-      if (!stat) {
-        return
-      }
+      return
     }
 
     const resultStream = createReadStream(file)
@@ -55,17 +48,10 @@ module.exports = async (args) => {
     const asset = assets.find((a) =>
       a.extensions.includes(path.extname(relative))
     )
-    let dependencies = []
 
     if (asset != null) {
-      result = await asset.transform(`/${relative}`, result, dependencies)
+      result = await asset.transform(`/${relative}`, result)
     }
-
-    dependencies = dependencies.map((file) => {
-      if (file.startsWith('/')) return file.substring(1)
-
-      return path.join(path.dirname(relative), file)
-    })
 
     await mkdir(path.dirname(newPath), {recursive: true})
 
@@ -76,12 +62,13 @@ module.exports = async (args) => {
     await Promise.all([
       finished(stream).then(() => {
         console.log(`${gray('[dev]')} copied ${relative}`)
-      }),
-      ...dependencies.map(cacheFile)
+      })
     ])
   }
 
   await Promise.all(
     files.map((file) => cacheFile(path.relative(args.src, file)))
   )
+
+  await Promise.all(list().map((file) => cacheFile(file)))
 }

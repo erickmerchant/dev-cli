@@ -13,7 +13,6 @@ const unlink = promisify(fs.unlink)
 const del = require('del')
 const cacheDir = require('find-cache-dir')({name: 'dev'}) ?? '.cache'
 const htmlAsset = require('./lib/html-asset.js')
-const cssAsset = require('./lib/css-asset.js')
 const jsAsset = require('./lib/js-asset.js')
 const getStat = require('./lib/get-stat.js')
 const cacheTransform = require('./lib/cache-transform.js')
@@ -24,7 +23,9 @@ const noop = () => {}
 module.exports = async (args, cb = noop) => {
   await del([cacheDir])
 
-  const assets = [htmlAsset(args), cssAsset(args), jsAsset(args)]
+  const {find} = await import('./lib/resolver.mjs')
+
+  const assets = [htmlAsset(args), jsAsset(args)]
 
   const app = createServer(async (req, res) => {
     try {
@@ -47,7 +48,7 @@ module.exports = async (args, cb = noop) => {
 
         res.write(`\n\n`)
       } else {
-        let file = path.join(cwd, args.src, from)
+        let file = find(from, args.src)
         let stat = await getStat(file)
 
         await compression(req, res)
@@ -89,24 +90,18 @@ module.exports = async (args, cb = noop) => {
         }
 
         if (!stat) {
-          file = path.join(cwd, from)
+          if (accepts(req).type(['txt', 'html']) === 'html') {
+            file = path.join(cwd, args.src, args.entry)
 
-          stat = await getStat(file)
+            stat = await getStat(file)
+          }
 
           if (!stat) {
-            if (accepts(req).type(['txt', 'html']) === 'html') {
-              file = path.join(cwd, args.src, args.entry)
+            res.writeHead(404)
 
-              stat = await getStat(file)
-            }
+            res.end('')
 
-            if (!stat) {
-              res.writeHead(404)
-
-              res.end('')
-
-              return
-            }
+            return
           }
         }
 
