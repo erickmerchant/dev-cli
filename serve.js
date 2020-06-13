@@ -11,6 +11,7 @@ const fs = require('fs')
 const finished = promisify(require('stream').finished)
 const unlink = promisify(fs.unlink)
 const del = require('del')
+const chokidar = require('chokidar')
 const cacheDir = require('find-cache-dir')({name: 'dev'}) ?? '.cache'
 const htmlAsset = require('./lib/html-asset.js')
 const jsAsset = require('./lib/js-asset.js')
@@ -38,13 +39,13 @@ module.exports = async (args, cb = noop) => {
           'Cache-Control': 'no-cache'
         })
 
-        fs.watch(
-          path.join(cwd, args.src),
-          {recursive: true, persistent: true},
-          (type, file) => {
+        chokidar
+          .watch(path.join(cwd, args.src), {ignoreInitial: true})
+          .on('all', (type, file) => {
+            file = path.relative(path.join(cwd, args.src), file)
+
             res.write(`data: ${JSON.stringify({type, file})}\n\n`)
-          }
-        )
+          })
 
         res.write(`\n\n`)
       } else {

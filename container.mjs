@@ -1,35 +1,54 @@
-export const createContainer = async (modules, styles, start) => {
-  const styleElements = []
+const styleElements = {}
+
+export const cssService = (url) => {
+  return {
+    match(changed) {
+      return changed === url
+    },
+
+    async provide(container) {
+      let styleElement = styleElements[url]
+
+      if (styleElement == null) {
+        styleElement = document.createElement('style')
+
+        document.head.append(styleElement)
+
+        styleElements[url] = styleElement
+      }
+
+      const css = await fetch(`/${url}?${Date.now()}`)
+
+      styleElement.textContent = await css.text()
+    }
+  }
+}
+
+export const jsService = (url, key) => {
+  return {
+    match(changed) {
+      return changed === url
+    },
+
+    async provide(container) {
+      const result = await import(`/${url}?${Date.now()}`)
+
+      container[key] = result
+    }
+  }
+}
+
+export const createService = (match, provide) => {
+  return {match, provide}
+}
+
+export const createContainer = async (services, start) => {
   const container = {}
-
-  const loadJS = async (url, query = '') => {
-    const result = await import(`/${url}${query}`)
-
-    container[modules[url]] = result
-  }
-
-  const loadCSS = async (index, query = '') => {
-    const css = await fetch(`/${styles[index]}${query}`)
-
-    const stylesheet = styleElements[index]
-
-    stylesheet.textContent = await css.text()
-  }
 
   const promises = []
 
-  for (const url of Object.keys(modules)) {
-    promises.push(loadJS(url))
-  }
-
-  for (let i = 0; i < styles.length; i++) {
-    const stylesheet = document.createElement('style')
-
-    document.head.append(stylesheet)
-
-    styleElements.push(stylesheet)
-
-    promises.push(loadCSS(i))
+  for (const service of services) {
+    promises.push(service.provide(container))
   }
 
   await Promise.all(promises).then(() => start(container))
@@ -40,22 +59,19 @@ export const createContainer = async (modules, styles, start) => {
   const changedFiles = []
 
   const handleChanges = async () => {
-    timeoutSet = false
-
-    const query = `?${Date.now()}`
     const promises = []
 
-    for (const file of Array.from(new Set(changedFiles))) {
-      const styleIndex = styles.indexOf(file)
-
-      if (styleIndex > -1) {
-        promises.push(loadCSS(styleIndex, query))
-      }
-
-      if (modules[file]) {
-        promises.push(loadJS(file, query))
+    for (const url of Array.from(new Set(changedFiles))) {
+      for (const service of services) {
+        if (service.match(url)) {
+          promises.push(service.provide(container))
+        }
       }
     }
+
+    timeoutSet = false
+
+    changedFiles.splice(0, changedFiles.length)
 
     if (promises.length) {
       await Promise.all(promises)
