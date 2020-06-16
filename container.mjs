@@ -1,57 +1,62 @@
 const styleElements = {}
 
-export const cssService = (url) => {
-  return {
-    match(changed) {
-      return changed === url
-    },
+const loadStyles = async (url) => {
+  let styleElement = styleElements[url]
 
-    async provide(container) {
-      let styleElement = styleElements[url]
+  if (styleElement == null) {
+    styleElement = document.createElement('style')
 
-      if (styleElement == null) {
-        styleElement = document.createElement('style')
+    document.head.append(styleElement)
 
-        document.head.append(styleElement)
+    styleElements[url] = styleElement
+  }
 
-        styleElements[url] = styleElement
+  const css = await fetch(`/${url}?${Date.now()}`)
+
+  styleElement.textContent = await css.text()
+}
+
+export const createContainer = (modules, styles, start) => {
+  const container = []
+
+  for (let i = 0; i < modules.length; i++) {
+    const source = modules[i]
+    let service
+
+    if (typeof source === 'string') {
+      service = {
+        match(url) {
+          return url === source
+        },
+        provide() {
+          return import(`/${source}?${Date.now()}`)
+        }
       }
+    } else if (Array.isArray(source)) {
+      const [pattern, provide] = source
 
-      const css = await fetch(`/${url}?${Date.now()}`)
-
-      styleElement.textContent = await css.text()
+      service = {
+        match(url) {
+          return url.match(pattern)
+        },
+        provide
+      }
+    } else {
+      throw TypeError('unsupported type for module provider')
     }
-  }
-}
 
-export const jsService = (url, key) => {
-  return {
-    match(changed) {
-      return changed === url
-    },
+    modules[i] = service
 
-    async provide(container) {
-      const result = await import(`/${url}?${Date.now()}`)
-
-      container[key] = result
-    }
-  }
-}
-
-export const createService = (match, provide) => {
-  return {match, provide}
-}
-
-export const createContainer = async (services, start) => {
-  const container = {}
-
-  const promises = []
-
-  for (const service of services) {
-    promises.push(service.provide(container))
+    container.push(service.provide())
   }
 
-  await Promise.all(promises).then(() => start(container))
+  for (const style of styles) {
+    loadStyles(style)
+  }
+
+  Promise.all(container).then((results) => {
+    start(...results)
+  })
 
   const eventSource = new EventSource('/__changes')
 
@@ -59,12 +64,18 @@ export const createContainer = async (services, start) => {
   const changedFiles = []
 
   const handleChanges = async () => {
-    const promises = []
+    for (const changed of Array.from(new Set(changedFiles))) {
+      for (let i = 0; i < modules.length; i++) {
+        const service = modules[i]
 
-    for (const url of Array.from(new Set(changedFiles))) {
-      for (const service of services) {
-        if (service.match(url)) {
-          promises.push(service.provide(container))
+        if (service.match(changed)) {
+          container[i] = service.provide()
+        }
+      }
+
+      for (const style of styles) {
+        if (changed === style) {
+          loadStyles(style)
         }
       }
     }
@@ -73,14 +84,12 @@ export const createContainer = async (services, start) => {
 
     changedFiles.splice(0, changedFiles.length)
 
-    if (promises.length) {
-      await Promise.all(promises)
-
-      start(container)
-    }
+    Promise.all(container).then((results) => {
+      start(...results)
+    })
   }
 
-  eventSource.onmessage = async (e) => {
+  eventSource.onmessage = (e) => {
     const {file} = JSON.parse(e.data)
 
     changedFiles.push(file)
