@@ -110,7 +110,10 @@ module.exports = async (args, cb = noop) => {
           16
         )}-${stat.mtime.getTime().toString(16)}"`
 
-        if (req.headers['if-none-match'] === etag) {
+        if (
+          accepts(req).type(['txt', 'html']) !== 'html' &&
+          req.headers['if-none-match'] === etag
+        ) {
           res.writeHead(304)
 
           res.end('')
