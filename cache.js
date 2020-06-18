@@ -1,20 +1,20 @@
-const path = require('path')
-const {gray} = require('kleur')
-const {promisify} = require('util')
-const fs = require('fs')
-const globby = require('globby')
-const stream = require('stream')
+import path from 'path'
+import {gray} from 'kleur/colors'
+import {promisify} from 'util'
+import fs from 'fs'
+import globby from 'globby'
+import stream from 'stream'
+import htmlAsset from './lib/html-asset.js'
+import jsAsset from './lib/js-asset.js'
+import getStat from './lib/get-stat.js'
+
 const finished = promisify(stream.finished)
 const createWriteStream = fs.createWriteStream
 const createReadStream = fs.createReadStream
 const mkdir = promisify(fs.mkdir)
-const htmlAsset = require('./lib/html-asset.js')
-const jsAsset = require('./lib/js-asset.js')
-const getStat = require('./lib/get-stat.js')
-const {console} = require('./lib/globals.js')
 
-module.exports = async (args) => {
-  const {find, list} = await import('./lib/resolver.mjs')
+export default async (args) => {
+  const {find, list} = await import('./lib/resolver.js')
   const assets = [htmlAsset(args), jsAsset(args)]
 
   const files = await globby([path.join(args.src, '**/*')])

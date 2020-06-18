@@ -12,6 +12,7 @@
   },
   "license": "ISC",
   "author": "Erick Merchant <erickmerchant@gmail.com>",
+  "type": "module",
   "files": [
     "LICENSE",
     "README.md",
@@ -19,13 +20,13 @@
     "cache.js",
     "cli.js",
     "serve.js",
-    "container.mjs"
+    "container.js"
   ],
   "bin": {
     "dev": "./cli.js"
   },
   "scripts": {
-    "lint": "eslint '*.{js,mjs}' 'lib/*.{js,mjs}'",
+    "lint": "eslint '*.js' 'lib/*.js'",
     "test": "npm run lint"
   },
   "dependencies": {

@@ -1,30 +1,33 @@
-const createServer = require('http').createServer
-const mime = require('mime-types')
-const accepts = require('accepts')
-const promisify = require('util').promisify
-const compression = promisify(require('compression')())
-const {gray} = require('kleur')
-const path = require('path')
-const url = require('url')
-const error = require('sergeant/error')
-const fs = require('fs')
-const finished = promisify(require('stream').finished)
+import {createServer} from 'http'
+import mime from 'mime-types'
+import accepts from 'accepts'
+import {promisify} from 'util'
+import _compression from 'compression'
+import {gray} from 'kleur/colors'
+import path from 'path'
+import url from 'url'
+import error from 'sergeant/error.js'
+import fs from 'fs'
+import {finished as _finished} from 'stream'
+import del from 'del'
+import chokidar from 'chokidar'
+import findCacheDir from 'find-cache-dir'
+import htmlAsset from './lib/html-asset.js'
+import jsAsset from './lib/js-asset.js'
+import getStat from './lib/get-stat.js'
+import cacheTransform from './lib/cache-transform.js'
+
+const cacheDir = findCacheDir({name: 'dev'}) ?? '.cache'
+const compression = promisify(_compression())
+const finished = promisify(_finished)
 const unlink = promisify(fs.unlink)
-const del = require('del')
-const chokidar = require('chokidar')
-const cacheDir = require('find-cache-dir')({name: 'dev'}) ?? '.cache'
-const htmlAsset = require('./lib/html-asset.js')
-const jsAsset = require('./lib/js-asset.js')
-const getStat = require('./lib/get-stat.js')
-const cacheTransform = require('./lib/cache-transform.js')
-const {console} = require('./lib/globals.js')
 const cwd = process.cwd()
 const noop = () => {}
 
-module.exports = async (args, cb = noop) => {
+export default async (args, cb = noop) => {
   await del([cacheDir])
 
-  const {find} = await import('./lib/resolver.mjs')
+  const {find} = await import('./lib/resolver.js')
 
   const assets = [htmlAsset(args), jsAsset(args)]
 

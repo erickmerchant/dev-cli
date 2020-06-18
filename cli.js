@@ -1,8 +1,10 @@
 #!/usr/bin/env node --experimental-import-meta-resolve
 
-const {command, start} = require('sergeant')('dev')
-const serve = require('./serve.js')
-const cache = require('./cache.js')
+import sergeant from 'sergeant'
+import serve from './serve.js'
+import cache from './cache.js'
+
+const {start, command} = sergeant('dev')
 
 command({
   name: 'serve',
