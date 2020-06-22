@@ -17,6 +17,7 @@ ${bold('Options:')}
  -p, --port   port to listen at
  -e, --entry  an alternate html to serve
  -h, --help   display this message
+
 `
 
 const devOptions = {
@@ -37,7 +38,7 @@ const program = async () => {
     })
 
     if (args['--help']) {
-      console.log(usage)
+      process.stdout.write(usage)
 
       process.exit(2)
     }
@@ -54,7 +55,7 @@ const program = async () => {
 
     await action.default(args)
   } catch (error) {
-    console.error(error)
+    process.stderr.write(`${error}\n`)
 
     process.exit(1)
   }

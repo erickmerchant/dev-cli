@@ -3,7 +3,7 @@ import mime from 'mime-types'
 import accepts from 'accepts'
 import {promisify} from 'util'
 import _compression from 'compression'
-import {gray} from 'kleur/colors'
+import {gray, green, yellow, red} from 'kleur/colors'
 import path from 'path'
 import url from 'url'
 import fs from 'fs'
@@ -35,9 +35,9 @@ export default async (args, cb = noop) => {
   const assets = [htmlAsset(args), jsAsset(args)]
 
   const app = createServer(async (req, res) => {
-    try {
-      const from = url.parse(req.url).pathname
+    const from = url.parse(req.url).pathname
 
+    try {
       if (req.headers.accept === 'text/event-stream') {
         res.writeHead(200, {
           'Content-Type': 'text/event-stream',
@@ -54,6 +54,12 @@ export default async (args, cb = noop) => {
           })
 
         res.write(`\n\n`)
+
+        process.stdout.write(
+          `${gray('[dev]')} ${req.method} ${green(200)} ${from} ${gray(
+            'text/event-stream'
+          )}\n`
+        )
       } else {
         let file = find(from, args.src)
         let stat = await getStat(file)
@@ -68,11 +74,20 @@ export default async (args, cb = noop) => {
 
             await finished(writeStream)
 
-            res.writeHead(stat ? 200 : 201, {
-              'Content-Type': mime.contentType('.json')
+            const statusCode = stat ? 200 : 201
+            const contentType = mime.contentType('.json')
+
+            res.writeHead(statusCode, {
+              'Content-Type': contentType
             })
 
             res.end('')
+
+            process.stdout.write(
+              `${gray('[dev]')} ${req.method} ${green(
+                statusCode
+              )} ${from} ${gray(contentType)}\n`
+            )
 
             return
           }
@@ -84,6 +99,10 @@ export default async (args, cb = noop) => {
 
             res.end('')
 
+            process.stdout.write(
+              `${gray('[dev]')} ${req.method} ${green(200)} ${from}\n`
+            )
+
             return
           }
         }
@@ -92,6 +111,10 @@ export default async (args, cb = noop) => {
           res.writeHead(405)
 
           res.end('')
+
+          process.stdout.write(
+            `${gray('[dev]')} ${req.method} ${yellow(405)} ${from}\n`
+          )
 
           return
         }
@@ -108,6 +131,10 @@ export default async (args, cb = noop) => {
 
             res.end('')
 
+            process.stdout.write(
+              `${gray('[dev]')} ${req.method} ${yellow(404)} ${from}\n`
+            )
+
             return
           }
         }
@@ -123,6 +150,10 @@ export default async (args, cb = noop) => {
           res.writeHead(304)
 
           res.end('')
+
+          process.stdout.write(
+            `${gray('[dev]')} ${req.method} ${green(304)} ${from}\n`
+          )
 
           return
         }
@@ -151,28 +182,40 @@ export default async (args, cb = noop) => {
           readStream = await cacheTransform({cacheDir, transform, code, from})
         }
 
+        const contentType = mime.contentType(path.extname(file))
+
         res.writeHead(200, {
           'ETag': etag,
-          'Content-Type': mime.contentType(path.extname(file))
+          'Content-Type': contentType
         })
 
         readStream.pipe(res)
+
+        process.stdout.write(
+          `${gray('[dev]')} ${req.method} ${green(200)} ${from} ${gray(
+            contentType
+          )}\n`
+        )
       }
     } catch (err) {
-      console.error(err)
+      process.stderr.write(`${err}\n`)
 
       res.writeHead(500)
 
       res.end('')
+
+      process.stdout.write(
+        `${gray('[dev]')} ${req.method} ${red(500)} ${from}\n`
+      )
     }
   })
 
   app.listen(args['--port'] ?? 3000, (err) => {
     if (err) {
-      console.error(err)
+      process.stderr.write(`${err}\n`)
     } else {
-      console.log(
-        `${gray('[dev]')} go to http://localhost:${args['--port'] ?? 3000}`
+      process.stdout.write(
+        `${gray('[dev]')} go to http://localhost:${args['--port'] ?? 3000}\n`
       )
     }
 

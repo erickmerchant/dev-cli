@@ -69,7 +69,7 @@ export default async (args) => {
 
     await Promise.all([
       finished(stream).then(() => {
-        console.log(`${gray('[dev]')} copied ${relative}`)
+        process.stdout.write(`${gray('[dev]')} copied ${relative}\n`)
       })
     ])
   }
