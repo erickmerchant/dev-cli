@@ -14,6 +14,14 @@ const createReadStream = fs.createReadStream
 const mkdir = promisify(fs.mkdir)
 
 export default async (args) => {
+  if (args.src == null) {
+    throw Error('<src> is required')
+  }
+
+  if (args.dist == null) {
+    throw Error('<dist> is required')
+  }
+
   const {find, list} = await import('./lib/resolver.js')
   const assets = [htmlAsset(args), jsAsset(args)]
 

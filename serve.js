@@ -6,7 +6,6 @@ import _compression from 'compression'
 import {gray} from 'kleur/colors'
 import path from 'path'
 import url from 'url'
-import error from 'sergeant/error.js'
 import fs from 'fs'
 import {finished as _finished} from 'stream'
 import del from 'del'
@@ -25,6 +24,10 @@ const cwd = process.cwd()
 const noop = () => {}
 
 export default async (args, cb = noop) => {
+  if (args.src == null) {
+    throw Error('<src> is required')
+  }
+
   await del([cacheDir])
 
   const {find} = await import('./lib/resolver.js')
@@ -95,7 +98,7 @@ export default async (args, cb = noop) => {
 
         if (!stat) {
           if (accepts(req).type(['txt', 'html']) === 'html') {
-            file = path.join(cwd, args.src, args.entry)
+            file = path.join(cwd, args.src, args['--entry'] ?? 'index.html')
 
             stat = await getStat(file)
           }
@@ -156,7 +159,7 @@ export default async (args, cb = noop) => {
         readStream.pipe(res)
       }
     } catch (err) {
-      error(err)
+      console.error(err)
 
       res.writeHead(500)
 
@@ -164,11 +167,13 @@ export default async (args, cb = noop) => {
     }
   })
 
-  app.listen(args.port, (err) => {
+  app.listen(args['--port'] ?? 3000, (err) => {
     if (err) {
-      error(err)
+      console.error(err)
     } else {
-      console.log(`${gray('[dev]')} go to http://localhost:${args.port}`)
+      console.log(
+        `${gray('[dev]')} go to http://localhost:${args['--port'] ?? 3000}`
+      )
     }
 
     cb(err, app)
