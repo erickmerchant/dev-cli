@@ -1,37 +1,57 @@
 #!/usr/bin/env node --experimental-import-meta-resolve
 
 import arg from 'arg'
+import assert from 'assert'
 import {green, bold} from 'kleur/colors'
 
 const usage = `
 ${green('@erickmerchant/dev-cli')}
 
-${bold('Usage:')}
+${green('Usage:')}
 
- $ dev serve [-p <port>] [-d] [-e <entry>] -- <src>
- $ dev cache [-d] -- <src> <dist>
+  ${bold('start a development server')}
 
-${bold('Options:')}
+    dev serve [-d] [-p <port>] [-e <entry>] [--http2] -- <src>
 
- -d, --dev    output source maps
- -p, --port   port to listen at
- -e, --entry  an alternate html to serve
- -h, --help   display this message
+  ${bold('save results to deploy to a static server')}
+
+    dev cache [-d] -- <src> <dist>
+
+${green('Options:')}
+
+  ${bold('-d, --dev')}
+
+    output source maps
+
+  ${bold('-p <port>, --port <port>')}
+
+    port to listen at
+
+  ${bold('-e <entry>, --entry <entry>')}
+
+    an alternate html to serve
+
+  ${bold('--http2')}
+
+    use http2. requires DEV_HTTP2_KEY and DEV_HTTP2_CERT
+    environment variables with paths to key and cert pem
+    files
+
+  ${bold('-h, --help')}
+
+    display this message
 
 `
-
-const devOptions = {
-  '--dev': Boolean,
-  '-d': '--dev'
-}
 
 const program = async () => {
   try {
     const args = arg({
-      ...devOptions,
+      '--dev': Boolean,
       '--port': Number,
       '--entry': String,
+      '--http2': Boolean,
       '--help': Boolean,
+      '-d': '--dev',
       '-p': '--port',
       '-e': '--entry',
       '-h': '--help'
@@ -47,9 +67,10 @@ const program = async () => {
 
     Object.assign(args, {src, dist})
 
-    if (!['serve', 'cache'].includes(command)) {
-      throw Error(`unkonwn command "${command}"`)
-    }
+    assert.ok(
+      ['serve', 'cache'].includes(command),
+      `unkonwn command "${command}"`
+    )
 
     const action = await import(`./${command}.js`)
 

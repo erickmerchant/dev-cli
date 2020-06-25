@@ -1,13 +1,16 @@
+import {createSecureServer} from 'http2'
 import {createServer} from 'http'
 import mime from 'mime-types'
 import accepts from 'accepts'
 import {promisify} from 'util'
-import _compression from 'compression'
+import compressible from 'compressible'
+import zlib from 'zlib'
+import assert from 'assert'
 import {gray, green, yellow, red} from 'kleur/colors'
 import path from 'path'
 import url from 'url'
 import fs from 'fs'
-import {finished as _finished} from 'stream'
+import {finished as _finished, pipeline} from 'stream'
 import del from 'del'
 import chokidar from 'chokidar'
 import findCacheDir from 'find-cache-dir'
@@ -16,16 +19,21 @@ import jsAsset from './lib/js-asset.js'
 import getStat from './lib/get-stat.js'
 import cacheTransform from './lib/cache-transform.js'
 
+const pipe = promisify(pipeline)
 const cacheDir = findCacheDir({name: 'dev'}) ?? '.cache'
-const compression = promisify(_compression())
 const finished = promisify(_finished)
 const unlink = promisify(fs.unlink)
 const cwd = process.cwd()
 const noop = () => {}
 
 export default async (args, cb = noop) => {
-  if (args.src == null) {
-    throw Error('<src> is required')
+  assert.ok(args.src != null, '<src> is required')
+
+  if (args['--http2']) {
+    assert.ok(
+      process.env.DEV_HTTP2_KEY != null && process.env.DEV_HTTP2_CERT != null,
+      'environment variables DEV_HTTP2_KEY and DEV_HTTP2_CERT are required'
+    )
   }
 
   await del([cacheDir])
@@ -34,16 +42,23 @@ export default async (args, cb = noop) => {
 
   const assets = [htmlAsset(args), jsAsset(args)]
 
-  const app = createServer(async (req, res) => {
+  let app
+
+  const onRequestHandler = async (req, res) => {
     const from = url.parse(req.url).pathname
 
     try {
       if (req.headers.accept === 'text/event-stream') {
-        res.writeHead(200, {
+        const headers = {
           'Content-Type': 'text/event-stream',
-          'Connection': 'keep-alive',
           'Cache-Control': 'no-cache'
-        })
+        }
+
+        if (!args['--http2']) {
+          headers['Connection'] = 'keep-alive'
+        }
+
+        res.writeHead(200, headers)
 
         chokidar
           .watch(path.join(cwd, args.src), {ignoreInitial: true})
@@ -63,8 +78,6 @@ export default async (args, cb = noop) => {
       } else {
         let file = find(from, args.src)
         let stat = await getStat(file)
-
-        await compression(req, res)
 
         if (from.endsWith('.json')) {
           if (req.method === 'POST') {
@@ -119,8 +132,10 @@ export default async (args, cb = noop) => {
           return
         }
 
+        const reqAccepts = accepts(req)
+
         if (!stat) {
-          if (accepts(req).type(['txt', 'html']) === 'html') {
+          if (reqAccepts.type(['txt', 'html']) === 'html') {
             file = path.join(cwd, args.src, args['--entry'] ?? 'index.html')
 
             stat = await getStat(file)
@@ -144,7 +159,7 @@ export default async (args, cb = noop) => {
         )}-${stat.mtime.getTime().toString(16)}"`
 
         if (
-          accepts(req).type(['txt', 'html']) !== 'html' &&
+          reqAccepts.type(['txt', 'html']) !== 'html' &&
           req.headers['if-none-match'] === etag
         ) {
           res.writeHead(304)
@@ -183,13 +198,37 @@ export default async (args, cb = noop) => {
         }
 
         const contentType = mime.contentType(path.extname(file))
+        const encoding = compressible(contentType)
+          ? reqAccepts.encoding(['br', 'gzip', 'deflate'])
+          : false
 
-        res.writeHead(200, {
+        const headers = {
           'ETag': etag,
           'Content-Type': contentType
-        })
+        }
 
-        readStream.pipe(res)
+        if (encoding) {
+          headers['Content-Encoding'] = encoding
+        }
+
+        res.writeHead(200, headers)
+
+        switch (encoding) {
+          case 'br':
+            pipe(readStream, zlib.createBrotliCompress(), res)
+            break
+
+          case 'gzip':
+            pipe(readStream, zlib.createGzip(), res)
+            break
+
+          case 'deflate':
+            pipe(readStream, zlib.createDeflate(), res)
+            break
+
+          default:
+            readStream.pipe(res)
+        }
 
         process.stdout.write(
           `${gray('[dev]')} ${req.method} ${green(200)} ${from} ${gray(
@@ -208,14 +247,28 @@ export default async (args, cb = noop) => {
         `${gray('[dev]')} ${req.method} ${red(500)} ${from}\n`
       )
     }
-  })
+  }
+
+  if (args['--http2']) {
+    app = createSecureServer(
+      {
+        key: fs.readFileSync(process.env.DEV_HTTP2_KEY),
+        cert: fs.readFileSync(process.env.DEV_HTTP2_CERT)
+      },
+      onRequestHandler
+    )
+  } else {
+    app = createServer(onRequestHandler)
+  }
 
   app.listen(args['--port'] ?? 3000, (err) => {
     if (err) {
       process.stderr.write(`${err}\n`)
     } else {
       process.stdout.write(
-        `${gray('[dev]')} go to http://localhost:${args['--port'] ?? 3000}\n`
+        `${gray('[dev]')} go to ${
+          args['--http2'] ? 'https' : 'http'
+        }://localhost:${args['--port'] ?? 3000}\n`
       )
     }
 

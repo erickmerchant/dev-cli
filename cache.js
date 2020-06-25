@@ -4,6 +4,7 @@ import {promisify} from 'util'
 import fs from 'fs'
 import globby from 'globby'
 import stream from 'stream'
+import assert from 'assert'
 import htmlAsset from './lib/html-asset.js'
 import jsAsset from './lib/js-asset.js'
 import getStat from './lib/get-stat.js'
@@ -14,13 +15,9 @@ const createReadStream = fs.createReadStream
 const mkdir = promisify(fs.mkdir)
 
 export default async (args) => {
-  if (args.src == null) {
-    throw Error('<src> is required')
-  }
+  assert.ok(args.src != null, '<src> is required')
 
-  if (args.dist == null) {
-    throw Error('<dist> is required')
-  }
+  assert.ok(args.dist != null, '<dist> is required')
 
   const {find, list} = await import('./lib/resolver.js')
   const assets = [htmlAsset(args), jsAsset(args)]
