@@ -31,8 +31,8 @@ export default async (args, cb = noop) => {
 
   if (args['--http2']) {
     assert.ok(
-      process.env.DEV_HTTP2_KEY != null && process.env.DEV_HTTP2_CERT != null,
-      'environment variables DEV_HTTP2_KEY and DEV_HTTP2_CERT are required'
+      process.env.SSL_KEY_FILE != null && process.env.SSL_CERT_FILE != null,
+      'environment variables SSL_KEY_FILE and SSL_CERT_FILE are required'
     )
   }
 
@@ -252,8 +252,8 @@ export default async (args, cb = noop) => {
   if (args['--http2']) {
     app = createSecureServer(
       {
-        key: fs.readFileSync(process.env.DEV_HTTP2_KEY),
-        cert: fs.readFileSync(process.env.DEV_HTTP2_CERT)
+        key: fs.readFileSync(process.env.SSL_KEY_FILE),
+        cert: fs.readFileSync(process.env.SSL_CERT_FILE)
       },
       onRequestHandler
     )

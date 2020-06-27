@@ -31,11 +31,11 @@ ${green('Options:')}
 
     an alternate html to serve
 
-  ${bold('--http2')}
+  ${bold('-2, --http2')}
 
-    use http2. requires DEV_HTTP2_KEY and DEV_HTTP2_CERT
+    use http2. requires SSL_KEY_FILE and SSL_CERT_FILE
     environment variables with paths to key and cert pem
-    files
+    files respectively
 
   ${bold('-h, --help')}
 
@@ -54,6 +54,7 @@ const program = async () => {
       '-d': '--dev',
       '-p': '--port',
       '-e': '--entry',
+      '-2': '--http2',
       '-h': '--help'
     })
 
