@@ -11,7 +11,7 @@ const loadStyles = async (url) => {
     styleElements[url] = styleElement
   }
 
-  const css = await fetch(`/${url}?${Date.now()}`)
+  const css = await fetch(`/${url}`)
 
   styleElement.textContent = await css.text()
 }
@@ -29,7 +29,7 @@ export const createContainer = (modules, styles, start) => {
           return url === source
         },
         provide() {
-          return import(`/${source}?${Date.now()}`)
+          return import(`/${source}`)
         }
       }
     } else if (Array.isArray(source)) {

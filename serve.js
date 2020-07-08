@@ -10,17 +10,13 @@ import {gray, green, yellow, red} from 'kleur/colors'
 import path from 'path'
 import url from 'url'
 import fs from 'fs'
-import {finished as _finished, pipeline} from 'stream'
-import del from 'del'
+import {finished as _finished, pipeline, Readable} from 'stream'
 import chokidar from 'chokidar'
-import findCacheDir from 'find-cache-dir'
 import htmlAsset from './lib/html-asset.js'
 import jsAsset from './lib/js-asset.js'
 import getStat from './lib/get-stat.js'
-import cacheTransform from './lib/cache-transform.js'
 
 const pipe = promisify(pipeline)
-const cacheDir = findCacheDir({name: 'dev'}) ?? '.cache'
 const finished = promisify(_finished)
 const unlink = promisify(fs.unlink)
 const cwd = process.cwd()
@@ -35,8 +31,6 @@ export default async (args, cb = noop) => {
       'environment variables SSL_KEY_FILE and SSL_CERT_FILE are required'
     )
   }
-
-  await del([cacheDir])
 
   const {find} = await import('./lib/resolver.js')
 
@@ -194,7 +188,9 @@ export default async (args, cb = noop) => {
 
           code = Buffer.concat(code)
 
-          readStream = await cacheTransform({cacheDir, transform, code, from})
+          const result = await transform(from, code)
+
+          readStream = Readable.from(result)
         }
 
         const contentType = mime.contentType(path.extname(file))
