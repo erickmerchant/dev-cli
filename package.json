@@ -39,7 +39,7 @@
     "globby": "^11.0.1",
     "kleur": "^4.0.2",
     "mime-types": "^2.1.27",
-    "parse5": "^6.0.0",
+    "parse5": "^6.0.1",
     "terser": "^4.6.13"
   },
   "devDependencies": {
