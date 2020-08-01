@@ -40,7 +40,7 @@
     "kleur": "^4.0.3",
     "mime-types": "^2.1.27",
     "parse5": "^6.0.1",
-    "terser": "^4.6.13"
+    "terser": "^5.0.0"
   },
   "devDependencies": {
     "@erickmerchant/eslint-config": "^1.1.1",
