@@ -40,13 +40,13 @@
     "kleur": "^4.1.0",
     "mime-types": "^2.1.27",
     "parse5": "^6.0.1",
-    "terser": "^5.0.0"
+    "terser": "^5.1.0"
   },
   "devDependencies": {
     "@erickmerchant/eslint-config": "^1.1.1",
     "@erickmerchant/prettier-config": "^1.1.0",
     "babel-eslint": "^10.1.0",
-    "eslint": "^7.6.0",
+    "eslint": "^7.7.0",
     "eslint-plugin-prettier": "^3.1.4",
     "prettier": "^2.0.5"
   },
