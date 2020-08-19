@@ -37,7 +37,7 @@
     "chokidar": "^3.4.2",
     "compressible": "^2.0.18",
     "globby": "^11.0.1",
-    "kleur": "^4.1.0",
+    "kleur": "^4.1.1",
     "mime-types": "^2.1.27",
     "parse5": "^6.0.1",
     "terser": "^5.2.0"
