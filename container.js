@@ -3,22 +3,24 @@ const styleElements = {}
 const loadStyles = async (url) => {
   let styleElement = styleElements[url]
 
-  if (styleElement == null) {
-    styleElement = document.createElement('style')
+  if (styleElement.nodeName === 'LINK') {
+    const newStyleElement = document.createElement('style')
 
-    document.head.append(styleElement)
+    styleElement.replaceWith(newStyleElement)
 
-    styleElements[url] = styleElement
+    styleElements[url] = newStyleElement
+
+    styleElement = newStyleElement
   }
 
   const now = Date.now()
 
-  const css = await fetch(`/${url}?${now}`)
+  const css = await fetch(`${url}?${now}`)
 
   styleElement.textContent = await css.text()
 }
 
-export const createContainer = (modules, styles, start) => {
+export const createContainer = (modules, start) => {
   const container = []
 
   for (let i = 0; i < modules.length; i++) {
@@ -36,15 +38,6 @@ export const createContainer = (modules, styles, start) => {
           return import(`/${source}?${now}`)
         }
       }
-    } else if (Array.isArray(source)) {
-      const [pattern, provide] = source
-
-      service = {
-        match(url) {
-          return url.match(pattern)
-        },
-        provide
-      }
     } else {
       throw TypeError('unsupported type for module provider')
     }
@@ -54,12 +47,14 @@ export const createContainer = (modules, styles, start) => {
     container.push(service.provide())
   }
 
-  for (const style of styles) {
-    loadStyles(style)
+  const linkRelStylesheets = document.querySelectorAll('link[rel="stylesheet"]')
+
+  for (const linkRelStylesheet of linkRelStylesheets) {
+    styleElements[linkRelStylesheet.getAttribute('href')] = linkRelStylesheet
   }
 
   Promise.all(container).then((results) => {
-    start(...results)
+    start(Object.assign({}, ...results))
   })
 
   const eventSource = new EventSource('/__changes')
@@ -77,10 +72,8 @@ export const createContainer = (modules, styles, start) => {
         }
       }
 
-      for (const style of styles) {
-        if (changed === style) {
-          loadStyles(style)
-        }
+      if (styleElements[`/${changed}`] != null) {
+        loadStyles(`/${changed}`)
       }
     }
 
@@ -89,7 +82,7 @@ export const createContainer = (modules, styles, start) => {
     changedFiles.splice(0, changedFiles.length)
 
     Promise.all(container).then((results) => {
-      start(...results)
+      start(Object.assign({}, ...results))
     })
   }
 
