@@ -20,70 +20,54 @@ const loadStyles = async (url) => {
   styleElement.textContent = await css.text()
 }
 
-export const createContainer = (modules, start) => {
-  const container = []
-
-  for (let i = 0; i < modules.length; i++) {
-    const source = modules[i]
-    let service
-
-    if (typeof source === 'string') {
-      service = {
-        match(url) {
-          return url === source
-        },
-        provide() {
-          const now = Date.now()
-
-          return import(`/${source}?${now}`)
-        }
-      }
-    } else {
-      throw TypeError('unsupported type for module provider')
-    }
-
-    modules[i] = service
-
-    container.push(service.provide())
-  }
-
+export const runtime = async (run) => {
   const linkRelStylesheets = document.querySelectorAll('link[rel="stylesheet"]')
 
   for (const linkRelStylesheet of linkRelStylesheets) {
     styleElements[linkRelStylesheet.getAttribute('href')] = linkRelStylesheet
   }
 
-  Promise.all(container).then((results) => {
-    start(Object.assign({}, ...results))
-  })
-
   const eventSource = new EventSource('/__changes')
 
   let timeoutSet = false
   const changedFiles = []
+  const container = {}
+
+  const getGet = (filter = () => true, query = '') => async (...paths) => {
+    const result = {}
+
+    await Promise.all(
+      paths
+        .flat()
+        .filter(filter)
+        .map(async (path) => {
+          const resolved = await import(`/${path}${query}`)
+
+          container[path] = resolved
+        })
+    )
+
+    for (const path of paths) {
+      Object.assign(result, container[path])
+    }
+
+    return result
+  }
+
+  await run(getGet())
 
   const handleChanges = async () => {
     for (const changed of Array.from(new Set(changedFiles))) {
-      for (let i = 0; i < modules.length; i++) {
-        const service = modules[i]
-
-        if (service.match(changed)) {
-          container[i] = service.provide()
-        }
-      }
-
       if (styleElements[`/${changed}`] != null) {
         loadStyles(`/${changed}`)
       }
     }
 
+    await run(getGet((path) => changedFiles.includes(path), `?${Date.now()}`))
+
     timeoutSet = false
 
     changedFiles.splice(0, changedFiles.length)
-
-    Promise.all(container).then((results) => {
-      start(Object.assign({}, ...results))
-    })
   }
 
   eventSource.onmessage = (e) => {
