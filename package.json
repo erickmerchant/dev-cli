@@ -20,7 +20,7 @@
     "cache.js",
     "cli.js",
     "serve.js",
-    "container.js"
+    "runtime.js"
   ],
   "bin": {
     "dev": "./cli.js"
