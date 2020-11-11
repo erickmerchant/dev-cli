@@ -11,7 +11,7 @@ ${green('Usage:')}
 
   ${bold('start a development server')}
 
-    dev serve [-d] [-p <port>] [-e <entry>] [--http2] -- <src>
+    dev serve [-d] [-p <port>] [-e <entry>]  [-i <ignore> ...] -- <src>
 
   ${bold('save results to deploy to a static server')}
 
@@ -31,11 +31,9 @@ ${green('Options:')}
 
     an alternate html to serve
 
-  ${bold('-2, --http2')}
+  ${bold('-i <ignore>, --ignore <ignore>')}
 
-    use http2. requires SSL_KEY_FILE and SSL_CERT_FILE
-    environment variables with paths to key and cert pem
-    files respectively
+    files to not copy
 
   ${bold('-h, --help')}
 
@@ -49,12 +47,12 @@ const program = async () => {
       '--dev': Boolean,
       '--port': Number,
       '--entry': String,
-      '--http2': Boolean,
+      '--ignore': [String],
       '--help': Boolean,
       '-d': '--dev',
       '-p': '--port',
       '-e': '--entry',
-      '-2': '--http2',
+      '-i': '--ignore',
       '-h': '--help'
     })
 

@@ -1,4 +1,3 @@
-import {createSecureServer} from 'http2'
 import {createServer} from 'http'
 import mime from 'mime-types'
 import accepts from 'accepts'
@@ -25,18 +24,9 @@ const noop = () => {}
 export default async (args, cb = noop) => {
   assert.ok(args.src != null, '<src> is required')
 
-  if (args['--http2']) {
-    assert.ok(
-      process.env.SSL_KEY_FILE != null && process.env.SSL_CERT_FILE != null,
-      'environment variables SSL_KEY_FILE and SSL_CERT_FILE are required'
-    )
-  }
-
   const {find} = await import('./lib/resolver.js')
 
   const assets = [htmlAsset(args), jsAsset(args)]
-
-  let app
 
   const onRequestHandler = async (req, res) => {
     const from = url.parse(req.url).pathname
@@ -45,11 +35,8 @@ export default async (args, cb = noop) => {
       if (req.headers.accept === 'text/event-stream') {
         const headers = {
           'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache'
-        }
-
-        if (!args['--http2']) {
-          headers['Connection'] = 'keep-alive'
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive'
         }
 
         res.writeHead(200, headers)
@@ -245,26 +232,14 @@ export default async (args, cb = noop) => {
     }
   }
 
-  if (args['--http2']) {
-    app = createSecureServer(
-      {
-        key: fs.readFileSync(process.env.SSL_KEY_FILE),
-        cert: fs.readFileSync(process.env.SSL_CERT_FILE)
-      },
-      onRequestHandler
-    )
-  } else {
-    app = createServer(onRequestHandler)
-  }
+  const app = createServer(onRequestHandler)
 
   app.listen(args['--port'] ?? 3000, (err) => {
     if (err) {
       process.stderr.write(`${err}\n`)
     } else {
       process.stdout.write(
-        `${gray('[dev]')} go to ${
-          args['--http2'] ? 'https' : 'http'
-        }://localhost:${args['--port'] ?? 3000}\n`
+        `${gray('[dev]')} go to http://localhost:${args['--port'] ?? 3000}\n`
       )
     }
 

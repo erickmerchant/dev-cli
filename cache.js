@@ -22,7 +22,9 @@ export default async (args) => {
   const {find, list} = await import('./lib/resolver.js')
   const assets = [htmlAsset(args), jsAsset(args)]
 
-  const files = await globby([path.join(args.src, '**/*')])
+  const files = await globby([path.join(args.src, '**/*')], {
+    ignore: args['--ignore'] ?? []
+  })
 
   const copied = []
   const cacheFile = async (relative) => {
