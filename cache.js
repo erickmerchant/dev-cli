@@ -2,7 +2,6 @@ import path from 'path'
 import {gray} from 'kleur/colors'
 import {promisify} from 'util'
 import fs from 'fs'
-import globby from 'globby'
 import stream from 'stream'
 import assert from 'assert'
 import htmlAsset from './lib/html-asset.js'
@@ -13,6 +12,7 @@ const finished = promisify(stream.finished)
 const createWriteStream = fs.createWriteStream
 const createReadStream = fs.createReadStream
 const mkdir = promisify(fs.mkdir)
+const readdir = promisify(fs.readdir)
 
 export default async (args) => {
   assert.ok(args.src != null, '<src> is required')
@@ -22,9 +22,29 @@ export default async (args) => {
   const {find, list} = await import('./lib/resolver.js')
   const assets = [htmlAsset(args), jsAsset(args)]
 
-  const files = await globby([path.join(args.src, '**/*')], {
-    ignore: args['--ignore'] ?? []
-  })
+  const files = []
+  const ignore = args['--ignore'] ?? []
+
+  const globFiles = async (dir) => {
+    const all = await readdir(dir, {withFileTypes: true})
+    const subs = []
+
+    for (const file of all) {
+      const full = path.join(dir, file.name)
+
+      if (ignore.includes(full)) continue
+
+      if (file.isDirectory()) {
+        subs.push(globFiles(full))
+      } else if (file.isFile()) {
+        files.push(full)
+      }
+    }
+
+    await Promise.all(subs)
+  }
+
+  await globFiles(args.src)
 
   const copied = []
   const cacheFile = async (relative) => {
