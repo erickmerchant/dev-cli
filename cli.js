@@ -11,7 +11,7 @@ ${green('Usage:')}
 
   ${bold('start a development server')}
 
-    dev serve [-d] [-p <port>] [-e <entry>]  [-i <ignore> ...] -- <src>
+    dev serve [-d] [-p <port>] [-e <entry>]  [-i <ignore> ...] -- <src> [<src> ...]
 
   ${bold('save results to deploy to a static server')}
 
@@ -62,14 +62,20 @@ const program = async () => {
       process.exit(2)
     }
 
-    const [command, src, dist] = args._
-
-    Object.assign(args, {src, dist})
+    const [command, ...additional] = args._
 
     assert.ok(
       ['serve', 'cache'].includes(command),
       `unkonwn command "${command}"`
     )
+
+    if (command === 'cache') {
+      const [src, dist] = additional
+
+      Object.assign(args, {src, dist})
+    } else {
+      Object.assign(args, {src: additional})
+    }
 
     const action = await import(`./${command}.js`)
 

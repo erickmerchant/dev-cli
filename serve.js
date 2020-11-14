@@ -41,13 +41,15 @@ export default async (args, cb = noop) => {
 
         res.writeHead(200, headers)
 
-        chokidar
-          .watch(path.join(cwd, args.src), {ignoreInitial: true})
-          .on('all', (type, file) => {
-            file = path.relative(path.join(cwd, args.src), file)
+        for (const src of args.src) {
+          chokidar
+            .watch(path.join(cwd, src), {ignoreInitial: true})
+            .on('all', (type, file) => {
+              file = path.relative(path.join(cwd, src), file)
 
-            res.write(`data: ${JSON.stringify({type, file})}\n\n`)
-          })
+              res.write(`data: ${JSON.stringify({type, file})}\n\n`)
+            })
+        }
 
         res.write(`\n\n`)
 
@@ -57,8 +59,16 @@ export default async (args, cb = noop) => {
           )}\n`
         )
       } else {
-        let file = find(from, args.src)
-        let stat = await getStat(file)
+        let file
+        let stat
+
+        /* eslint-disable no-await-in-loop */
+        for (const src of args.src) {
+          if (!stat) {
+            file = find(from, src)
+            stat = await getStat(file)
+          }
+        }
 
         if (from.endsWith('.json')) {
           if (req.method === 'POST') {
@@ -117,9 +127,13 @@ export default async (args, cb = noop) => {
 
         if (!stat) {
           if (reqAccepts.type(['txt', 'html']) === 'html') {
-            file = path.join(cwd, args.src, args['--entry'] ?? 'index.html')
-
-            stat = await getStat(file)
+            /* eslint-disable no-await-in-loop */
+            for (const src of args.src) {
+              if (!stat) {
+                file = path.join(cwd, src, args['--entry'] ?? 'index.html')
+                stat = await getStat(file)
+              }
+            }
           }
 
           if (!stat) {
