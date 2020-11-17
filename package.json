@@ -33,7 +33,7 @@
     "@babel/core": "^7.12.3",
     "@babel/preset-env": "^7.12.1",
     "accepts": "^1.3.7",
-    "arg": "^4.1.3",
+    "arg": "^5.0.0",
     "chokidar": "^3.4.3",
     "compressible": "^2.0.18",
     "kleur": "^4.1.3",
