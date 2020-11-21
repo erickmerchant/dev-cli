@@ -72,9 +72,11 @@ const program = async () => {
     if (command === 'cache') {
       const [src, dist] = additional
 
-      Object.assign(args, {src, dist})
+      args.src = src
+
+      args.dist = dist
     } else {
-      Object.assign(args, {src: additional})
+      args.src = additional
     }
 
     const action = await import(`./${command}.js`)
