@@ -41,7 +41,7 @@
     "terser": "^5.5.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.8",
+    "@babel/core": "^7.12.9",
     "@babel/eslint-parser": "^7.12.1",
     "@erickmerchant/eslint-config": "^2.0.0",
     "@erickmerchant/prettier-config": "^1.2.0",
