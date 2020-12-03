@@ -23,7 +23,7 @@
     "runtime.js"
   ],
   "bin": {
-    "dev": "./cli.js"
+    "dev": "cli.js"
   },
   "scripts": {
     "lint": "eslint . --ignore-path .gitignore",
