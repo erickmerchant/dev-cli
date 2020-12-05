@@ -11,11 +11,11 @@ ${green('Usage:')}
 
   ${bold('start a development server')}
 
-    dev serve [-d] [-p <port>] [-e <entry>]  [-i <ignore> ...] -- <src> [<src> ...]
+    dev serve [-d] [-p <port>] [-e <entry>] -- <src> [<src> ...]
 
   ${bold('save results to deploy to a static server')}
 
-    dev cache [-d] -- <src> <dist>
+    dev cache [-d]  [-i <ignore> ...] -- <src> <dist>
 
 ${green('Options:')}
 
