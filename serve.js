@@ -19,9 +19,8 @@ const pipe = promisify(pipeline)
 const finished = promisify(_finished)
 const unlink = promisify(fs.unlink)
 const cwd = process.cwd()
-const noop = () => {}
 
-export default async (args, cb = noop) => {
+export default async (args) => {
   assert.ok(args.src != null, '<src> is required')
 
   const {find} = await import('./lib/resolver.js')
@@ -256,7 +255,5 @@ export default async (args, cb = noop) => {
         `${gray('[dev]')} go to http://localhost:${args['--port'] ?? 3000}\n`
       )
     }
-
-    cb(err, app)
   })
 }
