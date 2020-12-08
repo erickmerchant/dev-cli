@@ -76,7 +76,7 @@ export const runtime = async (run) => {
     changedFiles.push(file)
 
     if (!timeoutSet) {
-      setTimeout(handleChanges, 100)
+      setTimeout(handleChanges, 200)
 
       timeoutSet = true
     }
