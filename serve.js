@@ -40,14 +40,35 @@ export default async (args) => {
 
         res.writeHead(200, headers)
 
+        const changedFiles = []
+        let timeout
+
+        const getWatchCallback = (src) => (type, file) => {
+          file = path.relative(path.join(cwd, src), file)
+
+          if (!changedFiles.includes(file)) {
+            changedFiles.push(file)
+
+            if (timeout) {
+              clearTimeout(timeout)
+            }
+
+            timeout = setTimeout(
+              () =>
+                res.write(
+                  `data: ${JSON.stringify({
+                    files: changedFiles.splice(0, changedFiles.length)
+                  })}\n\n`
+                ),
+              500
+            )
+          }
+        }
+
         for (const src of args.src) {
           chokidar
             .watch(path.join(cwd, src), {ignoreInitial: true})
-            .on('all', (type, file) => {
-              file = path.relative(path.join(cwd, src), file)
-
-              res.write(`data: ${JSON.stringify({type, file})}\n\n`)
-            })
+            .on('all', getWatchCallback(src))
         }
 
         res.write(`\n\n`)

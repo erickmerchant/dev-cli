@@ -29,8 +29,6 @@ export const runtime = async (run) => {
 
   const eventSource = new EventSource('/__changes')
 
-  let timeoutSet = false
-  const changedFiles = []
   const container = {}
 
   const getGet = (filter = () => true, query = '') => async (...paths) => {
@@ -56,7 +54,7 @@ export const runtime = async (run) => {
 
   await run(getGet())
 
-  const handleChanges = async () => {
+  const handleChanges = async (changedFiles) => {
     for (const changed of Array.from(new Set(changedFiles))) {
       if (styleElements[`/${changed}`] != null) {
         loadStyles(`/${changed}`)
@@ -64,21 +62,11 @@ export const runtime = async (run) => {
     }
 
     await run(getGet((path) => changedFiles.includes(path), `?${Date.now()}`))
-
-    timeoutSet = false
-
-    changedFiles.splice(0, changedFiles.length)
   }
 
   eventSource.onmessage = (e) => {
-    const {file} = JSON.parse(e.data)
+    const {files} = JSON.parse(e.data)
 
-    changedFiles.push(file)
-
-    if (!timeoutSet) {
-      setTimeout(handleChanges, 200)
-
-      timeoutSet = true
-    }
+    handleChanges(files)
   }
 }
