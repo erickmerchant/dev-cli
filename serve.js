@@ -82,7 +82,6 @@ export default async (args) => {
         let file
         let stat
 
-        /* eslint-disable no-await-in-loop */
         for (const src of args.src) {
           if (!stat) {
             file = find(from, src)
@@ -147,7 +146,6 @@ export default async (args) => {
 
         if (!stat) {
           if (reqAccepts.type(['txt', 'html']) === 'html') {
-            /* eslint-disable no-await-in-loop */
             for (const src of args.src) {
               if (!stat) {
                 file = path.join(cwd, src, args['--entry'] ?? 'index.html')
