@@ -59,7 +59,7 @@ const program = async () => {
     if (args['--help']) {
       process.stdout.write(usage)
 
-      process.exit(2)
+      return
     }
 
     const [command, ...additional] = args._
