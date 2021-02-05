@@ -1,8 +1,7 @@
 #!/usr/bin/env node --experimental-import-meta-resolve
 
-import arg from 'arg'
 import assert from 'assert'
-import {green, bold} from 'kleur/colors'
+import {green, bold, arg} from 'sergeant'
 
 const usage = `
 ${green('@erickmerchant/dev-cli')}
