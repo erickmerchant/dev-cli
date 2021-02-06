@@ -1,5 +1,5 @@
 import path from 'path'
-import {gray} from 'kleur/colors'
+import {gray} from 'sergeant'
 import {promisify} from 'util'
 import fs from 'fs'
 import stream from 'stream'
@@ -88,7 +88,7 @@ export default async (args) => {
 
     await Promise.all([
       finished(stream).then(() => {
-        process.stdout.write(`${gray('[dev]')} copied ${relative}\n`)
+        console.log(`${gray('[dev]')} copied ${relative}`)
       })
     ])
   }

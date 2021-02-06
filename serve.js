@@ -5,7 +5,7 @@ import {promisify} from 'util'
 import compressible from 'compressible'
 import zlib from 'zlib'
 import assert from 'assert'
-import {gray, green, yellow, red} from 'kleur/colors'
+import {gray, green, yellow, red} from 'sergeant'
 import path from 'path'
 import url from 'url'
 import fs from 'fs'
@@ -73,21 +73,14 @@ export default async (args) => {
 
         res.write(`\n\n`)
 
-        process.stdout.write(
+        console.log(
           `${gray('[dev]')} ${req.method} ${green(200)} ${from} ${gray(
             'text/event-stream'
-          )}\n`
+          )}`
         )
       } else {
-        let file
-        let stat
-
-        for (const src of args.src) {
-          if (!stat) {
-            file = find(from, src)
-            stat = await getStat(file)
-          }
-        }
+        let file = find(from, args.src[0])
+        let stat = await getStat(file)
 
         if (from.endsWith('.json')) {
           if (req.method === 'POST') {
@@ -106,25 +99,25 @@ export default async (args) => {
 
             res.end('')
 
-            process.stdout.write(
+            console.log(
               `${gray('[dev]')} ${req.method} ${green(
                 statusCode
-              )} ${from} ${gray(contentType)}\n`
+              )} ${from} ${gray(contentType)}`
             )
 
             return
           }
 
           if (req.method === 'DELETE') {
-            await unlink(file)
+            if (stat) {
+              await unlink(file)
+            }
 
             res.writeHead(200)
 
             res.end('')
 
-            process.stdout.write(
-              `${gray('[dev]')} ${req.method} ${green(200)} ${from}\n`
-            )
+            console.log(`${gray('[dev]')} ${req.method} ${green(200)} ${from}`)
 
             return
           }
@@ -135,11 +128,18 @@ export default async (args) => {
 
           res.end('')
 
-          process.stdout.write(
-            `${gray('[dev]')} ${req.method} ${yellow(405)} ${from}\n`
-          )
+          console.log(`${gray('[dev]')} ${req.method} ${yellow(405)} ${from}`)
 
           return
+        }
+
+        if (!stat) {
+          for (const src of args.src.slice(1)) {
+            if (!stat) {
+              file = find(from, src)
+              stat = await getStat(file)
+            }
+          }
         }
 
         const reqAccepts = accepts(req)
@@ -159,9 +159,7 @@ export default async (args) => {
 
             res.end('')
 
-            process.stdout.write(
-              `${gray('[dev]')} ${req.method} ${yellow(404)} ${from}\n`
-            )
+            console.log(`${gray('[dev]')} ${req.method} ${yellow(404)} ${from}`)
 
             return
           }
@@ -179,9 +177,7 @@ export default async (args) => {
 
           res.end('')
 
-          process.stdout.write(
-            `${gray('[dev]')} ${req.method} ${green(304)} ${from}\n`
-          )
+          console.log(`${gray('[dev]')} ${req.method} ${green(304)} ${from}`)
 
           return
         }
@@ -245,22 +241,20 @@ export default async (args) => {
             readStream.pipe(res)
         }
 
-        process.stdout.write(
+        console.log(
           `${gray('[dev]')} ${req.method} ${green(200)} ${from} ${gray(
             contentType
-          )}\n`
+          )}`
         )
       }
     } catch (err) {
-      process.stderr.write(`${err}\n`)
+      console.error(err)
 
       res.writeHead(500)
 
       res.end('')
 
-      process.stdout.write(
-        `${gray('[dev]')} ${req.method} ${red(500)} ${from}\n`
-      )
+      console.log(`${gray('[dev]')} ${req.method} ${red(500)} ${from}`)
     }
   }
 
@@ -268,10 +262,10 @@ export default async (args) => {
 
   app.listen(args['--port'] ?? 3000, (err) => {
     if (err) {
-      process.stderr.write(`${err}\n`)
+      console.error(err)
     } else {
-      process.stdout.write(
-        `${gray('[dev]')} go to http://localhost:${args['--port'] ?? 3000}\n`
+      console.log(
+        `${gray('[dev]')} go to http://localhost:${args['--port'] ?? 3000}`
       )
     }
   })
