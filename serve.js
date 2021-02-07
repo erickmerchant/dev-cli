@@ -83,7 +83,19 @@ export default async (args) => {
         let stat = await getStat(file)
 
         if (from.endsWith('.json')) {
-          if (req.method === 'POST') {
+          if (req.method === 'POST' || req.method === 'PUT') {
+            if (stat && req.method === 'POST') {
+              res.writeHead(409)
+
+              res.end('')
+
+              console.log(
+                `${gray('[dev]')} ${req.method} ${yellow(409)} ${from}`
+              )
+
+              return
+            }
+
             const writeStream = fs.createWriteStream(file)
 
             req.pipe(writeStream)
