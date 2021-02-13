@@ -1,67 +1,73 @@
-const styleElements = {}
+const styles = {}
+const modules = {}
+const container = {}
 
 const loadStyles = async (url) => {
-  let styleElement = styleElements[url]
+  let styleElement = styles[url]
 
   if (styleElement.nodeName === 'LINK') {
     const newStyleElement = document.createElement('style')
 
     styleElement.replaceWith(newStyleElement)
 
-    styleElements[url] = newStyleElement
+    styles[url] = newStyleElement
 
     styleElement = newStyleElement
   }
 
-  const now = Date.now()
-
-  const css = await fetch(`${url}?${now}`)
+  const css = await fetch(`${url}?${Date.now()}`)
 
   styleElement.textContent = await css.text()
 }
 
-export const runtime = async (run) => {
+const loadModule = (url) =>
+  import(`${url}?${Date.now()}`).then((results) => {
+    Object.assign(container, modules[url](results))
+  })
+
+export const use = async (url, callback = (results) => results) => {
+  modules[url] = callback
+}
+
+export const run = async (start) => {
   const linkRelStylesheets = document.querySelectorAll('link[rel="stylesheet"]')
 
   for (const linkRelStylesheet of linkRelStylesheets) {
-    styleElements[linkRelStylesheet.getAttribute('href')] = linkRelStylesheet
+    styles[linkRelStylesheet.getAttribute('href')] = linkRelStylesheet
   }
 
   const eventSource = new EventSource('/__changes')
 
-  const container = {}
+  const promises = []
 
-  const getGet = (filter = () => true, query = '') => async (...paths) => {
-    const result = {}
-
-    await Promise.all(
-      paths
-        .flat()
-        .filter(filter)
-        .map(async (path) => {
-          const resolved = await import(`/${path}${query}`)
-
-          container[path] = resolved
-        })
-    )
-
-    for (const path of paths) {
-      Object.assign(result, container[path])
-    }
-
-    return result
+  for (const url of Object.keys(modules)) {
+    promises.push(loadModule(url))
   }
 
-  await run(getGet())
+  await Promise.all(promises)
+
+  await start(container)
 
   const handleChanges = async (changedFiles) => {
-    for (const changed of Array.from(new Set(changedFiles))) {
-      if (styleElements[`/${changed}`] != null) {
-        loadStyles(`/${changed}`)
+    changedFiles = Array.from(new Set(changedFiles))
+
+    const promises = []
+
+    for (const changed of changedFiles) {
+      if (modules[`/${changed}`] != null) {
+        promises.push(loadModule(`/${changed}`))
       }
     }
 
-    await run(getGet((path) => changedFiles.includes(path), `?${Date.now()}`))
+    await Promise.all(promises)
+
+    await start(container)
+
+    for (const changed of changedFiles) {
+      if (styles[`/${changed}`] != null) {
+        loadStyles(`/${changed}`)
+      }
+    }
   }
 
   eventSource.onmessage = (e) => {
