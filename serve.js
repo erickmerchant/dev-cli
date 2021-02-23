@@ -27,8 +27,11 @@ export default async (args) => {
 
   const assets = [htmlAsset(args), jsAsset(args)]
 
+  const etagSuffix = Date.now().toString(16)
+
   const onRequestHandler = async (req, res) => {
-    const from = url.parse(req.url).pathname
+    const pathname = url.parse(req.url).pathname
+    let from = pathname
 
     try {
       if (req.headers.accept === 'text/event-stream') {
@@ -74,15 +77,15 @@ export default async (args) => {
         res.write(`\n\n`)
 
         console.log(
-          `${gray('[dev]')} ${req.method} ${green(200)} ${from} ${gray(
+          `${gray('[dev]')} ${req.method} ${green(200)} ${pathname} ${gray(
             'text/event-stream'
           )}`
         )
       } else {
-        let file = find(from, args.src[0])
+        let file = find(pathname, args.src[0])
         let stat = await getStat(file)
 
-        if (from.endsWith('.json')) {
+        if (pathname.endsWith('.json')) {
           if (req.method === 'POST' || req.method === 'PUT') {
             if (stat && req.method === 'POST') {
               res.writeHead(409)
@@ -90,7 +93,7 @@ export default async (args) => {
               res.end('')
 
               console.log(
-                `${gray('[dev]')} ${req.method} ${yellow(409)} ${from}`
+                `${gray('[dev]')} ${req.method} ${yellow(409)} ${pathname}`
               )
 
               return
@@ -114,7 +117,7 @@ export default async (args) => {
             console.log(
               `${gray('[dev]')} ${req.method} ${green(
                 statusCode
-              )} ${from} ${gray(contentType)}`
+              )} ${pathname} ${gray(contentType)}`
             )
 
             return
@@ -129,7 +132,9 @@ export default async (args) => {
 
             res.end('')
 
-            console.log(`${gray('[dev]')} ${req.method} ${green(200)} ${from}`)
+            console.log(
+              `${gray('[dev]')} ${req.method} ${green(200)} ${pathname}`
+            )
 
             return
           }
@@ -140,7 +145,9 @@ export default async (args) => {
 
           res.end('')
 
-          console.log(`${gray('[dev]')} ${req.method} ${yellow(405)} ${from}`)
+          console.log(
+            `${gray('[dev]')} ${req.method} ${yellow(405)} ${pathname}`
+          )
 
           return
         }
@@ -148,7 +155,7 @@ export default async (args) => {
         if (!stat) {
           for (const src of args.src.slice(1)) {
             if (!stat) {
-              file = find(from, src)
+              file = find(pathname, src)
               stat = await getStat(file)
             }
           }
@@ -161,6 +168,9 @@ export default async (args) => {
             for (const src of args.src) {
               if (!stat) {
                 file = path.join(cwd, src, args['--entry'] ?? 'index.html')
+
+                from = args['--entry'] ?? 'index.html'
+
                 stat = await getStat(file)
               }
             }
@@ -171,7 +181,9 @@ export default async (args) => {
 
             res.end('')
 
-            console.log(`${gray('[dev]')} ${req.method} ${yellow(404)} ${from}`)
+            console.log(
+              `${gray('[dev]')} ${req.method} ${yellow(404)} ${pathname}`
+            )
 
             return
           }
@@ -179,17 +191,16 @@ export default async (args) => {
 
         const etag = `W/"${stat.size.toString(
           16
-        )}-${stat.mtime.getTime().toString(16)}"`
+        )}-${stat.mtime.getTime().toString(16)}-${etagSuffix}"`
 
-        if (
-          reqAccepts.type(['txt', 'html']) !== 'html' &&
-          req.headers['if-none-match'] === etag
-        ) {
+        if (req.headers['if-none-match'] === etag) {
           res.writeHead(304)
 
           res.end('')
 
-          console.log(`${gray('[dev]')} ${req.method} ${green(304)} ${from}`)
+          console.log(
+            `${gray('[dev]')} ${req.method} ${green(304)} ${pathname}`
+          )
 
           return
         }
