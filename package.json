@@ -37,8 +37,7 @@
     "compressible": "^2.0.18",
     "mime-types": "^2.1.27",
     "parse5": "^6.0.1",
-    "sergeant": "^29.0.0",
-    "terser": "^5.5.0"
+    "sergeant": "^29.0.0"
   },
   "devDependencies": {
     "@erickmerchant/eslint-config": "^2.0.0",
