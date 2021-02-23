@@ -25,8 +25,25 @@ const loadModule = (url) =>
     Object.assign(container, modules[url](results))
   })
 
-export const use = async (url, callback = (results) => results) => {
-  modules[url] = callback
+const getUseCallback = (map) => (exports) => {
+  const results = {}
+
+  for (const [key, val] of Object.entries(map)) {
+    if (key === '*') {
+      results[val] = exports
+    } else {
+      results[val] = exports[key]
+    }
+  }
+
+  return results
+}
+
+export const use = async (url, callbackOrMap) => {
+  modules[url] =
+    typeof callbackOrMap === 'object'
+      ? getUseCallback(callbackOrMap)
+      : callbackOrMap
 }
 
 export const run = async (start) => {
