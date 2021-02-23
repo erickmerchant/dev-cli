@@ -39,7 +39,7 @@ const getUseCallback = (map) => (exports) => {
   return results
 }
 
-export const use = async (url, callbackOrMap) => {
+export const use = async (url, callbackOrMap = (exports) => exports) => {
   modules[url] =
     typeof callbackOrMap === 'object'
       ? getUseCallback(callbackOrMap)
