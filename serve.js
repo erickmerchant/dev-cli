@@ -4,7 +4,6 @@ import accepts from 'accepts'
 import {promisify} from 'util'
 import compressible from 'compressible'
 import zlib from 'zlib'
-import assert from 'assert'
 import {gray, green, yellow, red} from 'sergeant'
 import path from 'path'
 import url from 'url'
@@ -21,8 +20,6 @@ const unlink = promisify(fs.unlink)
 const cwd = process.cwd()
 
 export default async (args) => {
-  assert.ok(args.src != null, '<src> is required')
-
   const {find} = await import('./lib/resolver.js')
 
   const assets = [htmlAsset(args), jsAsset(args)]

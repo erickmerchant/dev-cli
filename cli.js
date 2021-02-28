@@ -69,12 +69,19 @@ const program = async () => {
     )
 
     if (command === 'cache') {
+      assert.ok(
+        additional.length === 2,
+        RangeError(`too ${args._.length > 2 ? 'many' : 'few'} arguments`)
+      )
+
       const [src, dist] = additional
 
       args.src = src
 
       args.dist = dist
     } else {
+      assert.ok(additional.length > 0, RangeError(`too few arguments`))
+
       args.src = additional
     }
 

@@ -3,7 +3,6 @@ import {gray} from 'sergeant'
 import {promisify} from 'util'
 import fs from 'fs'
 import stream from 'stream'
-import assert from 'assert'
 import htmlAsset from './lib/html-asset.js'
 import jsAsset from './lib/js-asset.js'
 import getStat from './lib/get-stat.js'
@@ -15,10 +14,6 @@ const mkdir = promisify(fs.mkdir)
 const readdir = promisify(fs.readdir)
 
 export default async (args) => {
-  assert.ok(args.src != null, '<src> is required')
-
-  assert.ok(args.dist != null, '<dist> is required')
-
   const {find, list} = await import('./lib/resolver.js')
   const assets = [htmlAsset(args), jsAsset(args)]
 
