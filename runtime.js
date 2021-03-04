@@ -2,7 +2,7 @@ const styles = {}
 const modules = {}
 const container = {}
 
-const loadStyles = async (url) => {
+const loadStyles = (url, css) => {
   let styleElement = styles[url]
 
   if (styleElement.nodeName === 'LINK') {
@@ -15,9 +15,7 @@ const loadStyles = async (url) => {
     styleElement = newStyleElement
   }
 
-  const css = await fetch(`${url}?${Date.now()}`)
-
-  styleElement.textContent = await css.text()
+  styleElement.textContent = css
 }
 
 const loadModule = (url) =>
@@ -25,21 +23,24 @@ const loadModule = (url) =>
     Object.assign(container, modules[url](results))
   })
 
-const getUseCallback = (map) => (exports) => {
+const getUseCallback = (map) => (definitions) => {
   const results = {}
 
   for (const [key, val] of Object.entries(map)) {
     if (key === '*') {
-      results[val] = exports
+      results[val] = definitions
     } else {
-      results[val] = exports[key]
+      results[val] = definitions[key]
     }
   }
 
   return results
 }
 
-export const use = async (url, callbackOrMap = (exports) => exports) => {
+export const use = async (
+  url,
+  callbackOrMap = (definitions) => definitions
+) => {
   modules[url] =
     typeof callbackOrMap === 'object'
       ? getUseCallback(callbackOrMap)
@@ -76,15 +77,29 @@ export const run = async (start) => {
       }
     }
 
-    await Promise.all(promises)
-
-    await start(container)
+    const newStyles = {}
 
     for (const changed of changedFiles) {
-      if (styles[`/${changed}`] != null) {
-        loadStyles(`/${changed}`)
+      const url = `/${changed}`
+
+      if (styles[url] != null) {
+        promises.push(
+          fetch(`${url}?${Date.now()}`).then(async (res) => {
+            const css = await res.text()
+
+            newStyles[url] = css
+          })
+        )
       }
     }
+
+    await Promise.all(promises)
+
+    for (const [url, css] of Object.entries(newStyles)) {
+      loadStyles(url, css)
+    }
+
+    await start(container)
   }
 
   eventSource.onmessage = (e) => {
