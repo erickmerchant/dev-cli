@@ -47,7 +47,7 @@ export const use = async (
       : callbackOrMap
 }
 
-export const run = async (start) => {
+export const run = async (init) => {
   const linkRelStylesheets = document.querySelectorAll('link[rel="stylesheet"]')
 
   for (const linkRelStylesheet of linkRelStylesheets) {
@@ -64,7 +64,13 @@ export const run = async (start) => {
 
   await Promise.all(promises)
 
-  await start(container)
+  let update = await init(container)
+
+  if (update) {
+    await update(container)
+  } else {
+    update = init
+  }
 
   const handleChanges = async (changedFiles) => {
     changedFiles = Array.from(new Set(changedFiles))
@@ -99,7 +105,7 @@ export const run = async (start) => {
       loadStyles(url, css)
     }
 
-    await start(container)
+    await update(container)
   }
 
   eventSource.onmessage = (e) => {
