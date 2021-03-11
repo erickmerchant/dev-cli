@@ -79,7 +79,8 @@ export default async (args) => {
           )}`
         )
       } else {
-        let file = find(pathname, args.src[0])
+        const files = find(pathname, args.src)
+        let file = files.shift()
         let stat = await getStat(file)
 
         if (pathname.endsWith('.json')) {
@@ -150,10 +151,13 @@ export default async (args) => {
         }
 
         if (!stat) {
-          for (const src of args.src.slice(1)) {
-            if (!stat) {
-              file = find(pathname, src)
-              stat = await getStat(file)
+          while (files.length) {
+            file = files.shift()
+
+            stat = await getStat(file)
+
+            if (stat) {
+              break
             }
           }
         }
@@ -223,7 +227,7 @@ export default async (args) => {
 
           code = Buffer.concat(code)
 
-          const result = await transform(from, code)
+          const result = await transform(file, code)
 
           readStream = Readable.from(result)
         }
