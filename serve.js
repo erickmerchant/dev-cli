@@ -6,7 +6,7 @@ import compressible from 'compressible'
 import zlib from 'zlib'
 import {gray, green, yellow, red} from 'sergeant'
 import path from 'path'
-import url from 'url'
+import {URL} from 'url'
 import fs from 'fs'
 import {finished as _finished, pipeline, Readable} from 'stream'
 import chokidar from 'chokidar'
@@ -27,7 +27,7 @@ export default async (args) => {
   const etagSuffix = Date.now().toString(16)
 
   const onRequestHandler = async (req, res) => {
-    const pathname = url.parse(req.url).pathname
+    const pathname = new URL(req.url, 'http://localhost').pathname
     let from = pathname
 
     try {
