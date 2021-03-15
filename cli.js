@@ -1,4 +1,4 @@
-#!/usr/bin/env node --experimental-import-meta-resolve
+#!/usr/bin/env node --experimental-import-meta-resolve --preserve-symlinks
 
 import assert from 'assert'
 import {green, bold, arg} from 'sergeant'
