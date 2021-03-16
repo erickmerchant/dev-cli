@@ -49,7 +49,7 @@ export default async (args) => {
 
     const newPath = path.join(args.dist, relative)
 
-    const file = await find(relative, [args.src])[0]
+    const file = (await find(relative, [args.src]))[0]
 
     const stat = await getStat(file)
 
