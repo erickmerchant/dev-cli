@@ -79,7 +79,7 @@ export default async (args) => {
           )}`
         )
       } else {
-        const files = find(pathname, args.src)
+        const files = await find(pathname, args.src)
         let file = files.shift()
         let stat = await getStat(file)
 
