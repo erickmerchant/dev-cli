@@ -3,19 +3,19 @@ const modules = {}
 const container = {}
 
 const loadStyles = (url, css) => {
-  let styleElement = styles[url]
+  const styleElement = styles[url]
 
   if (styleElement.nodeName === 'LINK') {
     const newStyleElement = document.createElement('style')
 
+    newStyleElement.textContent = css
+
     styleElement.replaceWith(newStyleElement)
 
     styles[url] = newStyleElement
-
-    styleElement = newStyleElement
+  } else {
+    styleElement.textContent = css
   }
-
-  styleElement.textContent = css
 }
 
 const loadModule = (url) =>
