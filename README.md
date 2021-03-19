@@ -6,6 +6,7 @@ A CLI that can run a development server or build a static site for deployment.
 - post and delete json to implement content edit UIs for development
 - uses @babel/preset-env targeting modules
 - allows bare imports even in html
+- uses import.meta.resolve to find modules
 
 ```
 npx @erickmerchant/dev-cli --help
