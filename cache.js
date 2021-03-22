@@ -1,11 +1,12 @@
+import fs from 'fs'
 import path from 'path'
 import {gray} from 'sergeant'
-import {promisify} from 'util'
-import fs from 'fs'
 import stream from 'stream'
-import htmlAsset from './lib/html-asset.js'
-import jsAsset from './lib/js-asset.js'
-import getStat from './lib/get-stat.js'
+import {promisify} from 'util'
+
+import {getStat} from './lib/get-stat.js'
+import {htmlAsset} from './lib/html-asset.js'
+import {jsAsset} from './lib/js-asset.js'
 
 const finished = promisify(stream.finished)
 const createWriteStream = fs.createWriteStream
@@ -13,7 +14,7 @@ const createReadStream = fs.createReadStream
 const mkdir = promisify(fs.mkdir)
 const readdir = promisify(fs.readdir)
 
-export default async (args) => {
+export const cache = async (args) => {
   const {find, list} = await import('./lib/resolver.js')
   const assets = [htmlAsset(args), jsAsset(args)]
 

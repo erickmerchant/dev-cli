@@ -1,7 +1,7 @@
 #!/usr/bin/env node --experimental-import-meta-resolve --preserve-symlinks
 
 import assert from 'assert'
-import {green, bold, arg} from 'sergeant'
+import {arg, bold, green} from 'sergeant'
 
 const usage = `
 ${green('@erickmerchant/dev-cli')}
@@ -85,9 +85,9 @@ const program = async () => {
       args.src = additional
     }
 
-    const action = await import(`./${command}.js`)
+    const commands = await import(`./${command}.js`)
 
-    await action.default(args)
+    await commands[command](args)
   } catch (error) {
     console.error(error)
 

@@ -1,25 +1,26 @@
+import accepts from 'accepts'
+import chokidar from 'chokidar'
+import compressible from 'compressible'
+import fs from 'fs'
 import {createServer} from 'http'
 import mime from 'mime-types'
-import accepts from 'accepts'
-import {promisify} from 'util'
-import compressible from 'compressible'
-import zlib from 'zlib'
-import {gray, green, yellow, red} from 'sergeant'
 import path from 'path'
-import {URL} from 'url'
-import fs from 'fs'
+import {gray, green, red, yellow} from 'sergeant'
 import {finished as _finished, pipeline, Readable} from 'stream'
-import chokidar from 'chokidar'
-import htmlAsset from './lib/html-asset.js'
-import jsAsset from './lib/js-asset.js'
-import getStat from './lib/get-stat.js'
+import {URL} from 'url'
+import {promisify} from 'util'
+import zlib from 'zlib'
+
+import {getStat} from './lib/get-stat.js'
+import {htmlAsset} from './lib/html-asset.js'
+import {jsAsset} from './lib/js-asset.js'
 
 const pipe = promisify(pipeline)
 const finished = promisify(_finished)
 const unlink = promisify(fs.unlink)
 const cwd = process.cwd()
 
-export default async (args) => {
+export const serve = async (args) => {
   const {find} = await import('./lib/resolver.js')
 
   const assets = [htmlAsset(args), jsAsset(args)]
