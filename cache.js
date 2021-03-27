@@ -87,11 +87,11 @@ export const cache = async (args) => {
         console.log(`${gray('[dev]')} copied ${relative}`)
       })
     ])
+
+    await Promise.all(list().map((file) => cacheFile(file)))
   }
 
   await Promise.all(
     files.map((file) => cacheFile(path.relative(args.src, file)))
   )
-
-  await Promise.all(list().map((file) => cacheFile(file)))
 }
