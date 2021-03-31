@@ -1,23 +1,21 @@
 import accepts from 'accepts'
 import chokidar from 'chokidar'
-import compressible from 'compressible'
 import fs from 'fs'
 import {createServer} from 'http'
 import mime from 'mime-types'
 import path from 'path'
 import {gray, green, red, yellow} from 'sergeant'
-import {finished as _finished, pipeline, Readable} from 'stream'
+import {finished as _finished} from 'stream'
 import {URL} from 'url'
 import {promisify} from 'util'
-import zlib from 'zlib'
 
 import {getStat} from './lib/get-stat.js'
 import {htmlAsset} from './lib/html-asset.js'
 import {jsAsset} from './lib/js-asset.js'
 
-const pipe = promisify(pipeline)
 const finished = promisify(_finished)
 const unlink = promisify(fs.unlink)
+const readFile = promisify(fs.readFile)
 const cwd = process.cwd()
 
 export const serve = async (args) => {
@@ -207,7 +205,7 @@ export const serve = async (args) => {
           return
         }
 
-        let readStream = fs.createReadStream(file)
+        let read = await readFile(file)
 
         let transform
 
@@ -220,51 +218,19 @@ export const serve = async (args) => {
         }
 
         if (transform) {
-          let code = []
-
-          for await (const chunk of readStream) {
-            code.push(chunk)
-          }
-
-          code = Buffer.concat(code)
-
-          const result = await transform(file, code)
-
-          readStream = Readable.from(result)
+          read = await transform(file, read)
         }
 
         const contentType = mime.contentType(path.extname(file))
-        const encoding = compressible(contentType)
-          ? reqAccepts.encoding(['br', 'gzip', 'deflate'])
-          : false
 
         const headers = {
           'ETag': etag,
           'Content-Type': contentType
         }
 
-        if (encoding) {
-          headers['Content-Encoding'] = encoding
-        }
-
         res.writeHead(200, headers)
 
-        switch (encoding) {
-          case 'br':
-            pipe(readStream, zlib.createBrotliCompress(), res)
-            break
-
-          case 'gzip':
-            pipe(readStream, zlib.createGzip(), res)
-            break
-
-          case 'deflate':
-            pipe(readStream, zlib.createDeflate(), res)
-            break
-
-          default:
-            readStream.pipe(res)
-        }
+        res.end(read)
 
         console.log(
           `${gray('[dev]')} ${req.method} ${green(200)} ${from} ${gray(

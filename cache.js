@@ -10,9 +10,9 @@ import {jsAsset} from './lib/js-asset.js'
 
 const finished = promisify(stream.finished)
 const createWriteStream = fs.createWriteStream
-const createReadStream = fs.createReadStream
 const mkdir = promisify(fs.mkdir)
 const readdir = promisify(fs.readdir)
+const readFile = promisify(fs.readFile)
 
 export const cache = async (args) => {
   const {find, list} = await import('./lib/resolver.js')
@@ -58,15 +58,7 @@ export const cache = async (args) => {
       return
     }
 
-    const resultStream = createReadStream(file)
-
-    let result = []
-
-    for await (const chunk of resultStream) {
-      result.push(chunk)
-    }
-
-    result = Buffer.concat(result)
+    let result = await readFile(file)
 
     const asset = assets.find((a) =>
       a.extensions.includes(path.extname(relative))
