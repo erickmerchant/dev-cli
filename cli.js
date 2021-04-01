@@ -40,27 +40,23 @@ ${green('Options:')}
 
 `
 
-const program = async () => {
-  try {
-    const args = arg({
-      '--dev': Boolean,
-      '--port': Number,
-      '--entry': String,
-      '--ignore': [String],
-      '--help': Boolean,
-      '-d': '--dev',
-      '-p': '--port',
-      '-e': '--entry',
-      '-i': '--ignore',
-      '-h': '--help'
-    })
+try {
+  const args = arg({
+    '--dev': Boolean,
+    '--port': Number,
+    '--entry': String,
+    '--ignore': [String],
+    '--help': Boolean,
+    '-d': '--dev',
+    '-p': '--port',
+    '-e': '--entry',
+    '-i': '--ignore',
+    '-h': '--help'
+  })
 
-    if (args['--help']) {
-      console.log(usage)
-
-      return
-    }
-
+  if (args['--help']) {
+    console.log(usage)
+  } else {
     const [command, ...additional] = args._
 
     assert.ok(
@@ -88,11 +84,9 @@ const program = async () => {
     const commands = await import(`./${command}.js`)
 
     await commands[command](args)
-  } catch (error) {
-    console.error(error)
-
-    process.exit(1)
   }
-}
+} catch (error) {
+  console.error(error)
 
-program()
+  process.exit(1)
+}
