@@ -7,6 +7,7 @@ import {promisify} from 'util'
 import {getStat} from './lib/get-stat.js'
 import {htmlAsset} from './lib/html-asset.js'
 import {jsAsset} from './lib/js-asset.js'
+import {find, list} from './lib/resolver.js'
 
 const finished = promisify(stream.finished)
 const createWriteStream = fs.createWriteStream
@@ -15,7 +16,6 @@ const readdir = promisify(fs.readdir)
 const readFile = promisify(fs.readFile)
 
 export const cache = async (args) => {
-  const {find, list} = await import('./lib/resolver.js')
   const assets = [htmlAsset(args), jsAsset(args)]
 
   const files = []

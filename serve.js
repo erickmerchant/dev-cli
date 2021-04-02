@@ -12,6 +12,7 @@ import {promisify} from 'util'
 import {getStat} from './lib/get-stat.js'
 import {htmlAsset} from './lib/html-asset.js'
 import {jsAsset} from './lib/js-asset.js'
+import {find} from './lib/resolver.js'
 
 const finished = promisify(_finished)
 const unlink = promisify(fs.unlink)
@@ -19,8 +20,6 @@ const readFile = promisify(fs.readFile)
 const cwd = process.cwd()
 
 export const serve = async (args) => {
-  const {find} = await import('./lib/resolver.js')
-
   const assets = [htmlAsset(args), jsAsset(args)]
 
   const etagSuffix = Date.now().toString(16)

@@ -18,10 +18,13 @@ const loadStyles = (url, css) => {
   }
 }
 
-const loadModule = (url) =>
-  import(`${url}?${Date.now()}`).then((results) => {
+const loadModule = (url) => {
+  const cacheBustedUrl = `${url}?${Date.now()}`
+
+  return import(cacheBustedUrl).then((results) => {
     Object.assign(container, modules[url](results))
   })
+}
 
 const getUseCallback = (map) => (definitions) => {
   const results = {}

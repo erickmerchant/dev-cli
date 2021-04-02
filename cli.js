@@ -3,6 +3,9 @@
 import assert from 'assert'
 import {arg, bold, green} from 'sergeant'
 
+import {cache} from './cache.js'
+import {serve} from './serve.js'
+
 const usage = `
 ${green('@erickmerchant/dev-cli')}
 
@@ -75,15 +78,15 @@ try {
       args.src = src
 
       args.dist = dist
+
+      await cache(args)
     } else {
       assert.ok(additional.length > 0, RangeError(`too few arguments`))
 
       args.src = additional
+
+      await serve(args)
     }
-
-    const commands = await import(`./${command}.js`)
-
-    await commands[command](args)
   }
 } catch (error) {
   console.error(error)
