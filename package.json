@@ -22,6 +22,7 @@
     "serve.js",
     "runtime.js"
   ],
+  "main": "runtime.js",
   "bin": {
     "dev": "cli.js"
   },
