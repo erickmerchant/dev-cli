@@ -18,10 +18,10 @@ const loadStyles = (url, css) => {
   }
 }
 
-const loadModule = (url) => {
-  const cacheBustedUrl = `${url}?${Date.now()}`
+const loadModule = (url, bust = true) => {
+  url = `${url}${bust ? `?${Date.now()}` : ''}`
 
-  return import(cacheBustedUrl).then((results) => {
+  return import(url).then((results) => {
     Object.assign(container, modules[url](results))
   })
 }
@@ -62,7 +62,7 @@ export const run = async (init) => {
   const promises = []
 
   for (const url of Object.keys(modules)) {
-    promises.push(loadModule(url))
+    promises.push(loadModule(url, false))
   }
 
   await Promise.all(promises)
