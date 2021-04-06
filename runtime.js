@@ -19,9 +19,7 @@ const loadStyles = (url, css) => {
 }
 
 const loadModule = (url, bust = true) => {
-  url = `${url}${bust ? `?${Date.now()}` : ''}`
-
-  return import(url).then((results) => {
+  return import(`${url}${bust ? `?${Date.now()}` : ''}`).then((results) => {
     Object.assign(container, modules[url](results))
   })
 }
