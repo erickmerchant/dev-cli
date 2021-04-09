@@ -19,7 +19,6 @@ export const cache = async (args) => {
   const assets = [htmlAsset(args), jsAsset(args)]
 
   const files = []
-  const ignore = args['--ignore'] ?? []
 
   const globFiles = async (dir) => {
     const all = await readdir(dir, {withFileTypes: true})
@@ -27,8 +26,6 @@ export const cache = async (args) => {
 
     for (const file of all) {
       const full = path.join(dir, file.name)
-
-      if (ignore.includes(full)) continue
 
       if (file.isDirectory()) {
         subs.push(globFiles(full))
@@ -76,7 +73,11 @@ export const cache = async (args) => {
 
     await Promise.all([
       finished(stream).then(() => {
-        console.log(`${gray('[dev]')} copied ${relative}`)
+        console.log(
+          `${gray('[dev]')} copied ${
+            relative.startsWith('/') ? relative : `/${relative}`
+          }`
+        )
       })
     ])
 

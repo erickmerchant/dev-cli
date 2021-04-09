@@ -17,7 +17,7 @@ ${green('Usage:')}
 
   ${bold('save results to deploy to a static server')}
 
-    dev cache [-d]  [-i <ignore> ...] -- <src> <dist>
+    dev cache [-d] -- <src> <dist>
 
 ${green('Options:')}
 
@@ -33,10 +33,6 @@ ${green('Options:')}
 
     an alternate html to serve
 
-  ${bold('-i <ignore>, --ignore <ignore>')}
-
-    files to not copy
-
   ${bold('-h, --help')}
 
     display this message
@@ -48,12 +44,10 @@ try {
     '--dev': Boolean,
     '--port': Number,
     '--entry': String,
-    '--ignore': [String],
     '--help': Boolean,
     '-d': '--dev',
     '-p': '--port',
     '-e': '--entry',
-    '-i': '--ignore',
     '-h': '--help'
   })
 
