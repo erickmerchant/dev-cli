@@ -56,6 +56,8 @@ try {
   } else {
     const [command, ...additional] = args._
 
+    args.command = command
+
     assert.ok(
       ['serve', 'cache'].includes(command),
       `unkonwn command "${command}"`
