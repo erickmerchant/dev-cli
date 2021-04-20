@@ -8,6 +8,10 @@ const loadStyles = (url, css) => {
   if (styleElement.nodeName === 'LINK') {
     const newStyleElement = document.createElement('style')
 
+    if (styleElement.hasAttribute('media')) {
+      newStyleElement.setAttribute('media', styleElement.getAttribute('media'))
+    }
+
     newStyleElement.textContent = css
 
     styleElement.replaceWith(newStyleElement)
