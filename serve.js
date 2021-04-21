@@ -170,6 +170,10 @@ export const serve = async (args) => {
 
                 from = args['--entry'] ?? 'index.html'
 
+                if (!from.startsWith('/')) {
+                  from = `/${from}`
+                }
+
                 stat = await getStat(file)
               }
             }
