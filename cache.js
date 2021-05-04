@@ -4,10 +4,9 @@ import {gray} from 'sergeant'
 import stream from 'stream'
 import {promisify} from 'util'
 
-import {getStat} from './lib/get-stat.js'
 import {htmlAsset} from './lib/html-asset.js'
 import {jsAsset} from './lib/js-asset.js'
-import {find, list} from './lib/resolver.js'
+import {findOne} from './lib/resolver.js'
 
 const finished = promisify(stream.finished)
 const createWriteStream = fs.createWriteStream
@@ -47,22 +46,22 @@ export const cache = async (args) => {
 
     const newPath = path.join(args.dist, relative)
 
-    const file = (await find(relative, [args.src]))[0]
+    const meta = await findOne(relative, args.src)
 
-    const stat = await getStat(file)
+    meta.resolved = []
 
-    if (!stat) {
+    if (!meta.pathname) {
       return
     }
 
-    let result = await readFile(file)
+    let result = await readFile(meta.pathname)
 
     const asset = assets.find((a) =>
       a.extensions.includes(path.extname(relative))
     )
 
     if (asset != null) {
-      result = await asset.transform(`/${relative}`, result)
+      result = await asset.transform(result, meta)
     }
 
     await mkdir(path.dirname(newPath), {recursive: true})
@@ -81,7 +80,7 @@ export const cache = async (args) => {
       })
     ])
 
-    await Promise.all(list().map((file) => cacheFile(file)))
+    await Promise.all(meta.resolved.map((file) => cacheFile(file)))
   }
 
   await Promise.all(

@@ -83,15 +83,15 @@ export const run = async (init) => {
     const promises = []
 
     for (const changed of changedFiles) {
-      if (modules[`/${changed}`] != null) {
-        promises.push(loadModule(`/${changed}`))
+      if (modules[changed] != null) {
+        promises.push(loadModule(changed))
       }
     }
 
     const newStyles = {}
 
     for (const changed of changedFiles) {
-      const url = `/${changed}`
+      const url = changed
 
       if (styles[url] != null) {
         promises.push(
