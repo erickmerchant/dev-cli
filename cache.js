@@ -6,7 +6,7 @@ import {promisify} from 'util'
 
 import {htmlAsset} from './lib/html-asset.js'
 import {jsAsset} from './lib/js-asset.js'
-import {findOne} from './lib/resolver.js'
+import {find} from './lib/resolver.js'
 
 const finished = promisify(stream.finished)
 const createWriteStream = fs.createWriteStream
@@ -46,7 +46,7 @@ export const cache = async (args) => {
 
     const newPath = path.join(args.dist, relative)
 
-    const meta = await findOne(relative, args.src)
+    const meta = await find(relative, [args.src])
 
     meta.resolved = []
 

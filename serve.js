@@ -5,7 +5,7 @@ import {URL} from 'url'
 import {changeHandler} from './lib/change-handler.js'
 import {fileHandler} from './lib/file-handler.js'
 import {jsonHandler} from './lib/json-handler.js'
-import {findAll} from './lib/resolver.js'
+import {find} from './lib/resolver.js'
 import {unfoundHandler} from './lib/unfound-handler.js'
 
 export const serve = async (args) => {
@@ -13,7 +13,7 @@ export const serve = async (args) => {
 
   const onRequestHandler = async (req, res) => {
     const url = new URL(req.url, 'http://localhost')
-    const found = await findAll(url.pathname, args.src)
+    const found = await find(url.pathname, args.src)
     const meta = {
       ...found,
       dependencies,
