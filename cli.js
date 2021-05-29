@@ -13,25 +13,29 @@ ${green('Usage:')}
 
   ${bold('start a development server')}
 
-    dev serve [-d] [-p <port>] [-e <entry>] -- <src> [<src> ...]
+    dev serve [-d] [-e <entry>] [-t <template>] [-p <port>] <src> [<src>...]
 
   ${bold('save results to deploy to a static server')}
 
-    dev cache [-d] -- <src> <dist>
+    dev cache [-d] [-e <entry>] [-t <template>] <dist> <src> [<src>...]
 
 ${green('Options:')}
 
   ${bold('-d, --dev')}
 
-    output source maps
+    output source maps, watch for changes, etc.
 
-  ${bold('-p <port>, --port <port>')}
+  ${bold('-e, --entry <entry>')}
 
-    port to listen at
+    application code
 
-  ${bold('-e <entry>, --entry <entry>')}
+  ${bold('-t, --template <template>')}
 
-    an alternate html to serve
+    template for html
+
+  ${bold('-p, --port')}
+
+    preferred port
 
   ${bold('-h, --help')}
 
@@ -42,12 +46,14 @@ ${green('Options:')}
 try {
   const args = arg({
     '--dev': Boolean,
-    '--port': Number,
     '--entry': String,
+    '--port': Number,
+    '--template': String,
     '--help': Boolean,
     '-d': '--dev',
-    '-p': '--port',
     '-e': '--entry',
+    '-p': '--port',
+    '-t': '--template',
     '-h': '--help'
   })
 
@@ -64,22 +70,17 @@ try {
     )
 
     if (command === 'cache') {
-      assert.ok(
-        additional.length === 2,
-        RangeError(`too ${args._.length > 2 ? 'many' : 'few'} arguments`)
-      )
-
-      const [src, dist] = additional
-
-      args.src = src
+      const [dist, ...src] = additional
 
       args.dist = dist
 
+      args.src = src
+
       await cache(args)
     } else {
-      assert.ok(additional.length > 0, RangeError(`too few arguments`))
+      const src = additional
 
-      args.src = additional
+      args.src = src
 
       await serve(args)
     }

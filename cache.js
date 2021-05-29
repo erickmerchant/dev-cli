@@ -4,7 +4,6 @@ import {gray} from 'sergeant'
 import stream from 'stream'
 import {promisify} from 'util'
 
-import {htmlAsset} from './lib/html-asset.js'
 import {jsAsset} from './lib/js-asset.js'
 import {find} from './lib/resolver.js'
 
@@ -15,11 +14,7 @@ const readdir = promisify(fs.readdir)
 const readFile = promisify(fs.readFile)
 
 export const cache = async (args) => {
-  const assets = [htmlAsset(args), jsAsset(args)]
-
-  const files = []
-
-  const globFiles = async (dir) => {
+  const globFiles = async (dir, files) => {
     const all = await readdir(dir, {withFileTypes: true})
     const subs = []
 
@@ -27,7 +22,7 @@ export const cache = async (args) => {
       const full = path.join(dir, file.name)
 
       if (file.isDirectory()) {
-        subs.push(globFiles(full))
+        subs.push(globFiles(full, files))
       } else if (file.isFile()) {
         files.push(full)
       }
@@ -36,54 +31,81 @@ export const cache = async (args) => {
     await Promise.all(subs)
   }
 
-  await globFiles(args.src)
+  for (const dir of args.src) {
+    const files = []
 
-  const copied = []
-  const cacheFile = async (relative) => {
-    if (copied.includes(relative)) return
+    await globFiles(dir, files)
 
-    copied.push(relative)
+    const copied = []
+    const cacheFile = async (relative) => {
+      if (copied.includes(relative)) return
 
-    const newPath = path.join(args.dist, relative)
+      copied.push(relative)
 
-    const meta = await find(relative, [args.src])
+      const newPath = path.join(args.dist, relative)
 
-    meta.resolved = []
+      const meta = await find(relative, args.src)
 
-    if (!meta.pathname) {
-      return
+      meta.args = args
+
+      meta.resolved = []
+
+      if (!meta.pathname) {
+        return
+      }
+
+      let code = await readFile(meta.pathname, 'utf8')
+
+      let transform = false
+
+      if (jsAsset.extensions.includes(path.extname(meta.pathname))) {
+        transform = true
+      }
+
+      if (transform) {
+        meta.entry = relative === args['--entry']
+
+        code = await jsAsset.transform(code, meta)
+      }
+
+      await mkdir(path.dirname(newPath), {recursive: true})
+
+      const stream = createWriteStream(newPath)
+
+      stream.end(code)
+
+      await Promise.all([
+        finished(stream).then(() => {
+          console.log(
+            `${gray('[dev]')} copied ${
+              relative.startsWith('/') ? relative : `/${relative}`
+            }`
+          )
+        })
+      ])
+
+      await Promise.all(meta.resolved.map((file) => cacheFile(file)))
     }
 
-    let result = await readFile(meta.pathname)
-
-    const asset = assets.find((a) =>
-      a.extensions.includes(path.extname(relative))
-    )
-
-    if (asset != null) {
-      result = await asset.transform(result, meta)
-    }
-
-    await mkdir(path.dirname(newPath), {recursive: true})
-
-    const stream = createWriteStream(newPath)
-
-    stream.end(result)
-
-    await Promise.all([
-      finished(stream).then(() => {
-        console.log(
-          `${gray('[dev]')} copied ${
-            relative.startsWith('/') ? relative : `/${relative}`
-          }`
-        )
-      })
-    ])
-
-    await Promise.all(meta.resolved.map((file) => cacheFile(file)))
+    await Promise.all(files.map((file) => cacheFile(path.relative(dir, file))))
   }
 
-  await Promise.all(
-    files.map((file) => cacheFile(path.relative(args.src, file)))
-  )
+  const {stats, pathname} = await find(args['--template'], args.src)
+
+  if (stats) {
+    let html = await readFile(pathname, 'utf8')
+
+    html = html.replace(
+      '</body>',
+      `<script type="module" src="/${args['--entry']}"></script></body>`
+    )
+
+    const stream = createWriteStream(path.join(args.dist, 'index.html'))
+
+    stream.end(html)
+
+    await finished(stream).then(() => {
+      console.log(`${gray('[dev]')} copied /index.html`)
+    })
+  }
 }

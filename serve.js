@@ -18,7 +18,8 @@ export const serve = async (args) => {
       ...found,
       dependencies,
       args,
-      url
+      url,
+      entry: url.pathname === `/${args['--entry']}`
     }
 
     const pathname = url.pathname
