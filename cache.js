@@ -54,7 +54,7 @@ export const cache = async (args) => {
         return
       }
 
-      let code = await readFile(meta.pathname, 'utf8')
+      let code = await readFile(meta.pathname)
 
       let transform = false
 
@@ -65,7 +65,7 @@ export const cache = async (args) => {
       if (transform) {
         meta.entry = relative === args['--entry']
 
-        code = await jsAsset.transform(code, meta)
+        code = await jsAsset.transform(String(code), meta)
       }
 
       await mkdir(path.dirname(newPath), {recursive: true})
