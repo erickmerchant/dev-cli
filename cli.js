@@ -13,11 +13,11 @@ ${green('Usage:')}
 
   ${bold('start a development server')}
 
-    dev serve [-d] [-e <entry>] [-t <template>] [-p <port>] <src> [<src>...]
+    dev serve [-d] [-e <entry>] [-p <port>] <src> [<src>...]
 
   ${bold('save results to deploy to a static server')}
 
-    dev cache [-d] [-e <entry>] [-t <template>] <dist> <src> [<src>...]
+    dev cache [-d] [-e <entry>] <dist> <src> [<src>...]
 
 ${green('Options:')}
 
@@ -26,10 +26,6 @@ ${green('Options:')}
     output source maps, watch for changes, etc.
 
   ${bold('-e, --entry <entry>')}
-
-    application code
-
-  ${bold('-t, --template <template>')}
 
     template for html
 
@@ -48,12 +44,10 @@ try {
     '--dev': Boolean,
     '--entry': String,
     '--port': Number,
-    '--template': String,
     '--help': Boolean,
     '-d': '--dev',
     '-e': '--entry',
     '-p': '--port',
-    '-t': '--template',
     '-h': '--help'
   })
 

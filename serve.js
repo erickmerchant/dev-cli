@@ -15,8 +15,7 @@ export const serve = async (args) => {
     const meta = {
       ...found,
       args,
-      url,
-      entry: url.pathname === `/${args['--entry']}`
+      url
     }
 
     const pathname = url.pathname

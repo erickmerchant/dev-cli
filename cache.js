@@ -63,8 +63,6 @@ export const cache = async (args) => {
       }
 
       if (transform) {
-        meta.entry = relative === args['--entry']
-
         code = await jsAsset.transform(String(code), meta)
       }
 
@@ -88,24 +86,5 @@ export const cache = async (args) => {
     }
 
     await Promise.all(files.map((file) => cacheFile(path.relative(dir, file))))
-  }
-
-  const {stats, pathname} = await find(args['--template'], args.src)
-
-  if (stats) {
-    let html = await readFile(pathname, 'utf8')
-
-    html = html.replace(
-      '</body>',
-      `<script type="module" src="/${args['--entry']}"></script></body>`
-    )
-
-    const stream = createWriteStream(path.join(args.dist, 'index.html'))
-
-    stream.end(html)
-
-    await finished(stream).then(() => {
-      console.log(`${gray('[dev]')} copied /index.html`)
-    })
   }
 }
