@@ -9,14 +9,11 @@ import {find} from './lib/resolver.js'
 import {unfoundHandler} from './lib/unfound-handler.js'
 
 export const serve = async (args) => {
-  const dependencies = []
-
   const onRequestHandler = async (req, res) => {
     const url = new URL(req.url, 'http://localhost')
     const found = await find(url.pathname, args.src)
     const meta = {
       ...found,
-      dependencies,
       args,
       url,
       entry: url.pathname === `/${args['--entry']}`

@@ -56,7 +56,7 @@ export const run = async (init) => {
   const linkRelStylesheets = document.querySelectorAll('link[rel="stylesheet"]')
 
   for (const linkRelStylesheet of linkRelStylesheets) {
-    styles[linkRelStylesheet.getAttribute('href')] = linkRelStylesheet
+    styles[linkRelStylesheet.href] = linkRelStylesheet
   }
 
   const eventSource = new EventSource('/__changes')
