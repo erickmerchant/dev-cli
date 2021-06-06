@@ -1,6 +1,6 @@
 import fs from 'fs'
+import {gray} from 'kleur/colors'
 import path from 'path'
-import {gray} from 'sergeant'
 import stream from 'stream'
 import {promisify} from 'util'
 

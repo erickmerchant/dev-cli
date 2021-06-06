@@ -1,7 +1,8 @@
 #!/usr/bin/env node --experimental-import-meta-resolve --preserve-symlinks
 
+import arg from 'arg'
 import assert from 'assert'
-import {arg, bold, green} from 'sergeant'
+import {bold, green} from 'kleur/colors'
 
 import {cache} from './cache.js'
 import {serve} from './serve.js'

@@ -1,5 +1,5 @@
 import {createServer} from 'http'
-import {gray, red} from 'sergeant'
+import {gray, red} from 'kleur/colors'
 import {URL} from 'url'
 
 import {changeHandler} from './lib/change-handler.js'
