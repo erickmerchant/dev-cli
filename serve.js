@@ -5,20 +5,11 @@ import {URL} from 'url'
 import {changeHandler} from './lib/change-handler.js'
 import {fileHandler} from './lib/file-handler.js'
 import {jsonHandler} from './lib/json-handler.js'
-import {find} from './lib/resolver.js'
 import {unfoundHandler} from './lib/unfound-handler.js'
 
 export const serve = async (args) => {
   const onRequestHandler = async (req, res) => {
     const url = new URL(req.url, 'http://localhost')
-    const found = await find(url.pathname, args.src)
-    const meta = {
-      ...found,
-      args,
-      url
-    }
-
-    const pathname = url.pathname
 
     try {
       for (const handler of [
@@ -27,7 +18,7 @@ export const serve = async (args) => {
         unfoundHandler,
         fileHandler
       ]) {
-        const handled = await handler(req, res, meta)
+        const handled = await handler(req, res, url, args)
 
         if (handled) {
           break
@@ -40,7 +31,7 @@ export const serve = async (args) => {
 
       res.end('')
 
-      console.log(`${gray('[dev]')} ${req.method} ${red(500)} ${pathname}`)
+      console.log(`${gray('[dev]')} ${req.method} ${red(500)} ${url.pathname}`)
     }
   }
 
