@@ -80,13 +80,7 @@ export const run = async (init) => {
   const handleChanges = async (changedFiles) => {
     changedFiles = Array.from(new Set(changedFiles))
 
-    const promises = []
-
-    for (const changed of changedFiles) {
-      if (modules[changed] != null) {
-        promises.push(loadModule(changed))
-      }
-    }
+    const stylePromises = []
 
     const newStyles = {}
 
@@ -94,7 +88,7 @@ export const run = async (init) => {
       const url = changed
 
       if (styles[url] != null) {
-        promises.push(
+        stylePromises.push(
           fetch(`${url}?${Date.now()}`).then(async (res) => {
             const css = await res.text()
 
@@ -104,13 +98,23 @@ export const run = async (init) => {
       }
     }
 
-    await Promise.all(promises)
+    await Promise.all(stylePromises)
+
+    const modulePromises = []
+
+    for (const changed of changedFiles) {
+      if (modules[changed] != null) {
+        modulePromises.push(loadModule(changed))
+      }
+    }
+
+    await Promise.all(modulePromises)
+
+    await update(container)
 
     for (const [url, css] of Object.entries(newStyles)) {
       loadStyles(url, css)
     }
-
-    await update(container)
   }
 
   eventSource.onmessage = (e) => {
