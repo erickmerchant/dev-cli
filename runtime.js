@@ -42,24 +42,20 @@ const getUseCallback = (map) => (definitions) => {
   return results
 }
 
-export const use = async (
-  url,
-  callbackOrMap = (definitions) => definitions
-) => {
-  modules[url] =
-    typeof callbackOrMap === 'object'
-      ? getUseCallback(callbackOrMap)
-      : callbackOrMap
+export const use = async (url, map, initial) => {
+  modules[url] = getUseCallback(map)
+
+  Object.assign(container, initial)
 }
 
-export const run = async (init) => {
+export const run = async (update) => {
   const linkRelStylesheets = document.querySelectorAll('link[rel="stylesheet"]')
 
   for (const linkRelStylesheet of linkRelStylesheets) {
     styles[linkRelStylesheet.href] = linkRelStylesheet
   }
 
-  const eventSource = new EventSource('/__changes')
+  const eventSource = new EventSource('/_changes')
 
   const promises = []
 
@@ -69,12 +65,8 @@ export const run = async (init) => {
 
   await Promise.all(promises)
 
-  let update = await init(container)
-
   if (update) {
     await update(container)
-  } else {
-    update = init
   }
 
   const handleChanges = async (changedFiles) => {

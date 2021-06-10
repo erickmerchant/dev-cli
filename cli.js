@@ -14,11 +14,11 @@ ${green('Usage:')}
 
   ${bold('start a development server')}
 
-    dev serve [-d] [-e <entry>] [-p <port>] <src> [<src>...]
+    dev serve [-d] [-e <entry>] [-p <port>] <src>
 
   ${bold('save results to deploy to a static server')}
 
-    dev cache [-d] [-e <entry>] <dist> <src> [<src>...]
+    dev cache [-d] [-e <entry>] <src> <dist>
 
 ${green('Options:')}
 
@@ -65,7 +65,7 @@ try {
     )
 
     if (command === 'cache') {
-      const [dist, ...src] = additional
+      const [src, dist] = additional
 
       args.dist = dist
 
@@ -73,7 +73,7 @@ try {
 
       await cache(args)
     } else {
-      const src = additional
+      const [src] = additional
 
       args.src = src
 

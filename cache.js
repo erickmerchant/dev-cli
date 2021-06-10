@@ -28,60 +28,60 @@ export const cache = async (args) => {
     await Promise.all(subs)
   }
 
-  for (const dir of args.src) {
-    const files = []
+  const files = []
 
-    await globFiles(dir, files)
+  await globFiles(args.src, files)
 
-    const copied = []
-    const cacheFile = async (relative) => {
-      if (copied.includes(relative)) return
+  const copied = []
+  const cacheFile = async (relative) => {
+    if (copied.includes(relative)) return
 
-      copied.push(relative)
+    copied.push(relative)
 
-      const newPath = path.join(args.dist, relative)
+    const newPath = path.join(args.dist, relative)
 
-      const found = await find(relative, args.src)
+    const found = await find(relative, args.src)
 
-      if (!found.pathname) {
-        return
-      }
-
-      let code = await fs.readFile(found.pathname)
-
-      let transform = false
-
-      if (jsAsset.extensions.includes(path.extname(found.pathname))) {
-        transform = true
-      }
-
-      if (transform) {
-        code = await jsAsset.transform(
-          String(code),
-          new URL(relative, 'http://localhost'),
-          args
-        )
-      }
-
-      await fs.mkdir(path.dirname(newPath), {recursive: true})
-
-      const stream = createWriteStream(newPath)
-
-      stream.end(code)
-
-      await Promise.all([
-        finished(stream).then(() => {
-          console.log(
-            `${gray('[dev]')} copied ${
-              relative.startsWith('/') ? relative : `/${relative}`
-            }`
-          )
-        })
-      ])
-
-      await Promise.all(resolved.map((file) => cacheFile(file)))
+    if (!found.pathname) {
+      return
     }
 
-    await Promise.all(files.map((file) => cacheFile(path.relative(dir, file))))
+    let code = await fs.readFile(found.pathname)
+
+    let transform = false
+
+    if (jsAsset.extensions.includes(path.extname(found.pathname))) {
+      transform = true
+    }
+
+    if (transform) {
+      code = await jsAsset.transform(
+        String(code),
+        new URL(relative, 'http://localhost'),
+        args
+      )
+    }
+
+    await fs.mkdir(path.dirname(newPath), {recursive: true})
+
+    const stream = createWriteStream(newPath)
+
+    stream.end(code)
+
+    await Promise.all([
+      finished(stream).then(() => {
+        console.log(
+          `${gray('[dev]')} copied ${
+            relative.startsWith('/') ? relative : `/${relative}`
+          }`
+        )
+      })
+    ])
+
+    await Promise.all(resolved.map((file) => cacheFile(file)))
   }
+
+  await Promise.all(
+    files.map((file) => cacheFile(path.relative(args.src, file)))
+  )
 }
