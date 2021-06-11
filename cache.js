@@ -1,14 +1,9 @@
-import {createWriteStream} from 'fs'
 import fs from 'fs/promises'
 import {gray} from 'kleur/colors'
 import path from 'path'
-import stream from 'stream'
-import {promisify} from 'util'
 
 import {jsAsset} from './lib/js-asset.js'
 import {find, resolved} from './lib/resolver.js'
-
-const finished = promisify(stream.finished)
 
 export const cache = async (args) => {
   const globFiles = async (dir, files) => {
@@ -64,12 +59,10 @@ export const cache = async (args) => {
 
     await fs.mkdir(path.dirname(newPath), {recursive: true})
 
-    const stream = createWriteStream(newPath)
-
-    stream.end(code)
+    const promise = fs.writeFile(newPath, code)
 
     await Promise.all([
-      finished(stream).then(() => {
+      promise.then(() => {
         console.log(
           `${gray('[dev]')} copied ${
             relative.startsWith('/') ? relative : `/${relative}`
