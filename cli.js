@@ -8,7 +8,7 @@ import {cache} from './cache.js'
 import {serve} from './serve.js'
 
 const usage = `
-${green('@erickmerchant/dev-cli')}
+@erickmerchant/dev-cli
 
 ${green('Usage:')}
 
