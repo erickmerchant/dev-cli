@@ -48,7 +48,7 @@ export const use = async (url, map, initial) => {
   Object.assign(container, initial)
 }
 
-export const run = async (update) => {
+export const run = async (update, selfURL) => {
   const linkRelStylesheets = document.querySelectorAll('link[rel="stylesheet"]')
 
   for (const linkRelStylesheet of linkRelStylesheets) {
@@ -72,19 +72,23 @@ export const run = async (update) => {
   const handleChanges = async (changedFiles) => {
     changedFiles = Array.from(new Set(changedFiles))
 
+    for (const changed of changedFiles) {
+      if (changed.href === selfURL.href) {
+        window.location.reload()
+      }
+    }
+
     const stylePromises = []
 
     const newStyles = {}
 
     for (const changed of changedFiles) {
-      const url = changed
-
-      if (styles[url] != null) {
+      if (styles[changed] != null) {
         stylePromises.push(
-          fetch(`${url}?${Date.now()}`).then(async (res) => {
+          fetch(`${changed}?${Date.now()}`).then(async (res) => {
             const css = await res.text()
 
-            newStyles[url] = css
+            newStyles[changed] = css
           })
         )
       }
