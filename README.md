@@ -6,7 +6,6 @@ A CLI that can run a development server or build a static site for deployment.
 - RESTful json to implement content edit UIs for development
 - uses @babel/preset-env targeting modules
 - uses import.meta.resolve to find modules
-- replaces import.meta.env.DEV with the value of --dev
 - minifies html template literals
 
 ```

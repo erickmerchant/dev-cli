@@ -14,17 +14,21 @@ ${green('Usage:')}
 
   ${bold('start a development server')}
 
-    dev serve [-d] [-e <entry>] [-p <port>] <src>
+    dev serve [-d] [-a <arguments>...] [-e <entry>] [-p <port>] <src>
 
   ${bold('save results to deploy to a static server')}
 
-    dev cache [-d] [-e <entry>] <src> <dist>
+    dev cache [-d] [-a <arguments>...] [-e <entry>] <src> <dist>
 
 ${green('Options:')}
 
   ${bold('-d, --dev')}
 
     output source maps, watch for changes, etc.
+
+  ${bold('-a, --argument <argument>')}
+
+    sent to _main. numbers, booleans, and strings are supported
 
   ${bold('-e, --entry <entry>')}
 
@@ -43,10 +47,12 @@ ${green('Options:')}
 try {
   const args = arg({
     '--dev': Boolean,
+    '--argument': [String],
     '--entry': String,
     '--port': Number,
     '--help': Boolean,
     '-d': '--dev',
+    '-a': '--argument',
     '-e': '--entry',
     '-p': '--port',
     '-h': '--help'
