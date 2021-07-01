@@ -19,7 +19,6 @@
     "lib/",
     "cli.js",
     "serve.js",
-    "cache.js",
     "runtime.js"
   ],
   "main": "runtime.js",

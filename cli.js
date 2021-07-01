@@ -4,7 +4,6 @@ import arg from 'arg'
 import assert from 'assert'
 import {bold, green} from 'kleur/colors'
 
-import {cache} from './cache.js'
 import {serve} from './serve.js'
 
 const usage = `
@@ -15,10 +14,6 @@ ${green('Usage:')}
   ${bold('start a development server')}
 
     dev serve [-d] [-a <arguments>...] [-e <entry>] [-p <port>] <src>
-
-  ${bold('save results to deploy to a static server')}
-
-    dev cache [-d] [-a <arguments>...] [-e <entry>] <src> <dist>
 
 ${green('Options:')}
 
@@ -65,20 +60,9 @@ try {
 
     args.command = command
 
-    assert.ok(
-      ['serve', 'cache'].includes(command),
-      `unkonwn command "${command}"`
-    )
+    assert.ok(['serve'].includes(command), `unkonwn command "${command}"`)
 
-    if (command === 'cache') {
-      const [src, dist] = additional
-
-      args.dist = dist
-
-      args.src = src
-
-      await cache(args)
-    } else {
+    if (command === 'serve') {
       const [src] = additional
 
       args.src = src
