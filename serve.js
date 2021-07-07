@@ -1,4 +1,5 @@
-import {createServer} from 'http'
+import devcert from 'devcert'
+import {createServer} from 'https'
 import {gray, red} from 'kleur/colors'
 import {URL} from 'url'
 
@@ -9,7 +10,7 @@ import {unfoundHandler} from './lib/unfound-handler.js'
 
 export const serve = async (args) => {
   const onRequestHandler = async (req, res) => {
-    const url = new URL(req.url, 'http://localhost')
+    const url = new URL(req.url, 'https://localhost')
 
     try {
       for (const handler of [
@@ -35,14 +36,16 @@ export const serve = async (args) => {
     }
   }
 
-  const app = createServer(onRequestHandler)
+  const ssl = await devcert.certificateFor('dev-cli.app')
+
+  const app = createServer(ssl, onRequestHandler)
 
   app.listen(args['--port'] ?? 3000, (err) => {
     if (err) {
       console.error(err)
     } else {
       console.log(
-        `${gray('[dev]')} go to http://localhost:${args['--port'] ?? 3000}`
+        `${gray('[dev]')} go to https://localhost:${args['--port'] ?? 3000}`
       )
     }
   })

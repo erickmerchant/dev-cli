@@ -116,7 +116,7 @@ export const run = async (update, selfURL) => {
   eventSource.onmessage = (e) => {
     let {files} = JSON.parse(e.data)
 
-    files = files.map((url) => new URL(url, `http://${window.location.host}/`))
+    files = files.map((url) => new URL(url, `https://${window.location.host}/`))
 
     handleChanges(files)
   }
