@@ -1,5 +1,5 @@
 import devcert from 'devcert'
-import {createServer} from 'https'
+import {createSecureServer} from 'http2'
 import {gray, red} from 'kleur/colors'
 import {URL} from 'url'
 
@@ -36,9 +36,11 @@ export const serve = async (args) => {
     }
   }
 
-  const ssl = await devcert.certificateFor('dev-cli.app')
+  const options = await devcert.certificateFor('dev-cli.app')
 
-  const app = createServer(ssl, onRequestHandler)
+  options.allowHTTP1 = true
+
+  const app = createSecureServer(options, onRequestHandler)
 
   app.listen(args['--port'] ?? 3000, (err) => {
     if (err) {
