@@ -1,25 +1,15 @@
+import 'construct-style-sheets-polyfill'
+
 const styles = {}
 const modules = {}
 const container = {}
 
-const loadStyles = (url, css) => {
-  const styleElement = styles[url]
+const loadStyle = (url, bust = true) => {
+  return fetch(`${url}?${bust ? `?${Date.now()}` : ''}`).then(async (res) => {
+    const css = await res.text()
 
-  if (styleElement.nodeName === 'LINK') {
-    const newStyleElement = document.createElement('style')
-
-    if (styleElement.hasAttribute('media')) {
-      newStyleElement.setAttribute('media', styleElement.getAttribute('media'))
-    }
-
-    newStyleElement.textContent = css
-
-    styleElement.replaceWith(newStyleElement)
-
-    styles[url] = newStyleElement
-  } else {
-    styleElement.textContent = css
-  }
+    await styles[url].replace(css)
+  })
 }
 
 const loadModule = (url, bust = true) => {
@@ -51,13 +41,24 @@ export const use = async (url, map, initial) => {
 export const run = async (update, selfURL) => {
   const linkRelStylesheets = document.querySelectorAll('link[rel="stylesheet"]')
 
+  const promises = []
+
   for (const linkRelStylesheet of linkRelStylesheets) {
-    styles[linkRelStylesheet.href] = linkRelStylesheet
+    styles[linkRelStylesheet.href] = new CSSStyleSheet()
+
+    promises.push(
+      loadStyle(linkRelStylesheet.href, false).then(() => {
+        document.adoptedStyleSheets = [
+          ...document.adoptedStyleSheets,
+          styles[linkRelStylesheet.href]
+        ]
+
+        linkRelStylesheet.remove()
+      })
+    )
   }
 
   const eventSource = new EventSource('/_changes')
-
-  const promises = []
 
   for (const url of Object.keys(modules)) {
     promises.push(loadModule(url, false))
@@ -67,57 +68,39 @@ export const run = async (update, selfURL) => {
 
   if (update) {
     await update(container)
-  }
 
-  const handleChanges = async (changedFiles) => {
-    changedFiles = Array.from(new Set(changedFiles))
+    const handleChanges = async (changedFiles) => {
+      changedFiles = Array.from(new Set(changedFiles))
 
-    for (const changed of changedFiles) {
-      if (changed.href === selfURL.href) {
-        window.location.reload()
+      const promises = []
+
+      for (const changed of changedFiles) {
+        if (changed.href === selfURL.href) {
+          window.location.reload()
+        }
+
+        if (styles[changed] != null) {
+          promises.push(loadStyle(changed))
+        }
+
+        if (modules[changed] != null) {
+          promises.push(loadModule(changed))
+        }
       }
+
+      await Promise.all(promises)
+
+      await update(container)
     }
 
-    const stylePromises = []
+    eventSource.onmessage = (e) => {
+      let {files} = JSON.parse(e.data)
 
-    const newStyles = {}
+      files = files.map(
+        (url) => new URL(url, `https://${window.location.host}/`)
+      )
 
-    for (const changed of changedFiles) {
-      if (styles[changed] != null) {
-        stylePromises.push(
-          fetch(`${changed}?${Date.now()}`).then(async (res) => {
-            const css = await res.text()
-
-            newStyles[changed] = css
-          })
-        )
-      }
+      handleChanges(files)
     }
-
-    await Promise.all(stylePromises)
-
-    const modulePromises = []
-
-    for (const changed of changedFiles) {
-      if (modules[changed] != null) {
-        modulePromises.push(loadModule(changed))
-      }
-    }
-
-    await Promise.all(modulePromises)
-
-    await update(container)
-
-    for (const [url, css] of Object.entries(newStyles)) {
-      loadStyles(url, css)
-    }
-  }
-
-  eventSource.onmessage = (e) => {
-    let {files} = JSON.parse(e.data)
-
-    files = files.map((url) => new URL(url, `https://${window.location.host}/`))
-
-    handleChanges(files)
   }
 }
