@@ -4,8 +4,10 @@ const styles = {}
 const modules = {}
 const container = {}
 
+const getURL = (url, bust) => `${url}${bust ? `?${Date.now()}` : ''}`
+
 const loadStyle = (url, bust = true) => {
-  return fetch(`${url}?${bust ? `?${Date.now()}` : ''}`).then(async (res) => {
+  return fetch(getURL(url, bust)).then(async (res) => {
     const css = await res.text()
 
     await styles[url].replace(css)
@@ -13,7 +15,7 @@ const loadStyle = (url, bust = true) => {
 }
 
 const loadModule = (url, bust = true) => {
-  return import(`${url}${bust ? `?${Date.now()}` : ''}`).then((results) => {
+  return import(getURL(url, bust)).then((results) => {
     Object.assign(container, modules[url](results))
   })
 }
