@@ -2,23 +2,22 @@ import 'construct-style-sheets-polyfill'
 
 const styles = {}
 const modules = {}
+const counters = {}
 const container = {}
 
-const getURL = (url, bust) => `${url}${bust ? `?${Date.now()}` : ''}`
+const getURL = (url) => `${url}?${counters[url] ?? 0}`
 
-const loadStyle = (url, bust = true) => {
-  return fetch(getURL(url, bust)).then(async (res) => {
+const loadStyle = (url) =>
+  fetch(getURL(url)).then(async (res) => {
     const css = await res.text()
 
     await styles[url].replace(css)
   })
-}
 
-const loadModule = (url, bust = true) => {
-  return import(getURL(url, bust)).then((results) => {
+const loadModule = (url) =>
+  import(getURL(url)).then((results) => {
     Object.assign(container, modules[url](results))
   })
-}
 
 const getUseCallback = (map) => (definitions) => {
   const results = {}
@@ -49,7 +48,7 @@ export const run = async (update, selfURL) => {
     styles[linkRelStylesheet.href] = new CSSStyleSheet()
 
     promises.push(
-      loadStyle(linkRelStylesheet.href, false).then(() => {
+      loadStyle(linkRelStylesheet.href).then(() => {
         document.adoptedStyleSheets = [
           ...document.adoptedStyleSheets,
           styles[linkRelStylesheet.href]
@@ -63,7 +62,7 @@ export const run = async (update, selfURL) => {
   const eventSource = new EventSource('/_changes')
 
   for (const url of Object.keys(modules)) {
-    promises.push(loadModule(url, false))
+    promises.push(loadModule(url))
   }
 
   await Promise.all(promises)
@@ -96,13 +95,19 @@ export const run = async (update, selfURL) => {
     }
 
     eventSource.onmessage = (e) => {
-      let {files} = JSON.parse(e.data)
+      const {files} = JSON.parse(e.data)
 
-      files = files.map(
-        (url) => new URL(url, `https://${window.location.host}/`)
-      )
+      for (let i = 0; i < files.length; i++) {
+        files[i] = new URL(files[i], `https://${window.location.host}/`)
+
+        const val = counters[files[i]]
+
+        counters[files[i]] = val != null ? val + 1 : 1
+      }
 
       handleChanges(files)
     }
   }
 }
+
+export const _import = (url) => import(getURL(url))
