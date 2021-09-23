@@ -13,9 +13,13 @@ ${green('Usage:')}
 
   ${bold('start a development server')}
 
-    dev serve [-d] [-a <arguments>...] [-e <entry>] [-p <port>] <src>
+    dev serve (<src> | -s <src>) [options]
 
 ${green('Options:')}
+
+  ${bold('-s, --src')}
+
+    a directory to serve files from
 
   ${bold('-d, --dev')}
 
@@ -41,11 +45,13 @@ ${green('Options:')}
 
 try {
   const args = arg({
+    '--src': String,
     '--dev': Boolean,
     '--argument': [String],
     '--entry': String,
     '--port': Number,
     '--help': Boolean,
+    '-s': '--src',
     '-d': '--dev',
     '-a': '--argument',
     '-e': '--entry',
@@ -56,17 +62,13 @@ try {
   if (args['--help']) {
     console.log(usage);
   } else {
-    const [command, ...additional] = args._;
+    assert.ok(args._.length === 1, RangeError(`Too many arguments`));
 
-    args.command = command;
+    const [command] = args._;
 
     assert.ok(['serve'].includes(command), `unkonwn command "${command}"`);
 
     if (command === 'serve') {
-      const [src] = additional;
-
-      args.src = src;
-
       await serve(args);
     }
   }
