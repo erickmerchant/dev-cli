@@ -1,10 +1,10 @@
 #!/usr/bin/env node --experimental-import-meta-resolve --preserve-symlinks
 
-import arg from 'arg'
-import assert from 'assert'
-import {bold, green} from 'kleur/colors'
+import arg from 'arg';
+import assert from 'assert';
+import {bold, green} from 'kleur/colors';
 
-import {serve} from './serve.js'
+import {serve} from './serve.js';
 
 const usage = `
 @erickmerchant/dev-cli
@@ -37,7 +37,7 @@ ${green('Options:')}
 
     display this message
 
-`
+`;
 
 try {
   const args = arg({
@@ -50,28 +50,28 @@ try {
     '-a': '--argument',
     '-e': '--entry',
     '-p': '--port',
-    '-h': '--help'
-  })
+    '-h': '--help',
+  });
 
   if (args['--help']) {
-    console.log(usage)
+    console.log(usage);
   } else {
-    const [command, ...additional] = args._
+    const [command, ...additional] = args._;
 
-    args.command = command
+    args.command = command;
 
-    assert.ok(['serve'].includes(command), `unkonwn command "${command}"`)
+    assert.ok(['serve'].includes(command), `unkonwn command "${command}"`);
 
     if (command === 'serve') {
-      const [src] = additional
+      const [src] = additional;
 
-      args.src = src
+      args.src = src;
 
-      await serve(args)
+      await serve(args);
     }
   }
 } catch (error) {
-  console.error(error)
+  console.error(error);
 
-  process.exit(1)
+  process.exit(1);
 }

@@ -1,54 +1,54 @@
-import devcert from 'devcert'
-import {createSecureServer} from 'http2'
-import {gray, red} from 'kleur/colors'
-import {URL} from 'url'
+import devcert from 'devcert';
+import {createSecureServer} from 'http2';
+import {gray, red} from 'kleur/colors';
+import {URL} from 'url';
 
-import {changeHandler} from './lib/change-handler.js'
-import {fileHandler} from './lib/file-handler.js'
-import {jsonHandler} from './lib/json-handler.js'
-import {unfoundHandler} from './lib/unfound-handler.js'
+import {changeHandler} from './lib/change-handler.js';
+import {fileHandler} from './lib/file-handler.js';
+import {jsonHandler} from './lib/json-handler.js';
+import {unfoundHandler} from './lib/unfound-handler.js';
 
 export const serve = async (args) => {
   const onRequestHandler = async (req, res) => {
-    const url = new URL(req.url, 'https://localhost')
+    const url = new URL(req.url, 'https://localhost');
 
     try {
       for (const handler of [
         changeHandler,
         jsonHandler,
         unfoundHandler,
-        fileHandler
+        fileHandler,
       ]) {
-        const handled = await handler(req, res, url, args)
+        const handled = await handler(req, res, url, args);
 
         if (handled) {
-          break
+          break;
         }
       }
     } catch (err) {
-      console.error(err)
+      console.error(err);
 
-      res.writeHead(500)
+      res.writeHead(500);
 
-      res.end('')
+      res.end('');
 
-      console.log(`${gray('[dev]')} ${req.method} ${red(500)} ${url.pathname}`)
+      console.log(`${gray('[dev]')} ${req.method} ${red(500)} ${url.pathname}`);
     }
-  }
+  };
 
-  const options = await devcert.certificateFor('dev-cli.app')
+  const options = await devcert.certificateFor('dev-cli.app');
 
-  options.allowHTTP1 = true
+  options.allowHTTP1 = true;
 
-  const app = createSecureServer(options, onRequestHandler)
+  const app = createSecureServer(options, onRequestHandler);
 
   app.listen(args['--port'] ?? 3000, (err) => {
     if (err) {
-      console.error(err)
+      console.error(err);
     } else {
       console.log(
         `${gray('[dev]')} go to https://localhost:${args['--port'] ?? 3000}`
-      )
+      );
     }
-  })
-}
+  });
+};
