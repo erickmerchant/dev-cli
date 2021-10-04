@@ -13,7 +13,7 @@ ${green('Usage:')}
 
   ${bold('start a development server')}
 
-    dev serve (<src> | -s <src>) [options]
+    dev [options]
 
 ${green('Options:')}
 
@@ -62,15 +62,9 @@ try {
   if (args['--help']) {
     console.log(usage);
   } else {
-    assert.ok(args._.length === 1, RangeError(`Too many arguments`));
+    assert.ok(args._.length === 0, RangeError(`Too many arguments`));
 
-    const [command] = args._;
-
-    assert.ok(['serve'].includes(command), `unkonwn command "${command}"`);
-
-    if (command === 'serve') {
-      await serve(args);
-    }
+    await serve(args);
   }
 } catch (error) {
   console.error(error);
