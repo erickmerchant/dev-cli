@@ -2,7 +2,7 @@
 
 import arg from 'arg';
 import assert from 'assert';
-import {bold, green} from 'kleur/colors';
+import {green} from 'kleur/colors';
 
 import {serve} from './serve.js';
 
@@ -11,35 +11,24 @@ const usage = `
 
 ${green('Usage:')}
 
-  ${bold('start a development server')}
+  dev [options] --src <string>
 
-    dev [options]
+  start a development server
 
 ${green('Options:')}
 
-  ${bold('-s, --src')}
+  --src <string>, -s <string>     a directory to serve files from
 
-    a directory to serve files from
+  --argument <various> ..., 
+          -a <various> ...        sent to _main (boolean, number, or string)
 
-  ${bold('-d, --dev')}
+  --entry <string>, -e <string>   html entry point
 
-    output source maps, watch for changes, etc.
+  --port <number>, -p <number>    preferred port
 
-  ${bold('-a, --argument <argument>')}
+  -d, --dev                       output source maps, watch for changes, etc.
 
-    sent to _main. numbers, booleans, and strings are supported
-
-  ${bold('-e, --entry <entry>')}
-
-    template for html
-
-  ${bold('-p, --port')}
-
-    preferred port
-
-  ${bold('-h, --help')}
-
-    display this message
+  -h, --help                      display this message
 
 `;
 
@@ -63,6 +52,8 @@ try {
     console.log(usage);
   } else {
     assert.ok(args._.length === 0, RangeError(`Too many arguments`));
+
+    assert.ok(args['--src'], '--src is required');
 
     if (!args['--entry']) {
       args['--entry'] = 'index.html';
