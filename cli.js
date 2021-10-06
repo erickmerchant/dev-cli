@@ -64,6 +64,10 @@ try {
   } else {
     assert.ok(args._.length === 0, RangeError(`Too many arguments`));
 
+    if (!args['--entry']) {
+      args['--entry'] = 'index.html';
+    }
+
     await serve(args);
   }
 } catch (error) {
