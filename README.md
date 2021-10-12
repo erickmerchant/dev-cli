@@ -1,6 +1,6 @@
 # @erickmerchant/dev-cli
 
-A CLI for running a development server.
+A development server.
 
 - hot module reloading via a server-sent events and a client-side ioc container
 - RESTful json to implement content edit UIs for development
