@@ -35,11 +35,14 @@
     "accepts": "^1.3.7",
     "arg": "^5.0.0",
     "chokidar": "^3.4.3",
+    "compression": "^1.7.4",
     "construct-style-sheets-polyfill": "^3.0.0",
     "devcert": "^1.1.3",
     "find-up": "^6.0.0",
+    "http2-proxy": "^5.0.53",
     "kleur": "^4.1.4",
-    "mime-types": "^2.1.27"
+    "mime-types": "^2.1.27",
+    "polka": "^0.5.2"
   },
   "devDependencies": {
     "@erickmerchant/eslint-config": "^3.0.0",

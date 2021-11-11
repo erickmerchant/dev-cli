@@ -17,18 +17,24 @@ ${green('Usage:')}
 
 ${green('Options:')}
 
-  --src <string>, -s <string>     a directory to serve files from
+  --src <string>, 
+     -s <string>              a directory to serve files from
 
   --argument <various> ..., 
-          -a <various> ...        sent to _main (boolean, number, or string)
+          -a <various> ...    sent to _main (boolean, number, or string)
 
-  --entry <string>, -e <string>   html entry point
+  --entry <string>, 
+       -e <string>            html entry point
 
-  --port <number>, -p <number>    preferred port
+  --port <number>, 
+      -p <number>             preferred port
 
-  -d, --dev                       output source maps, watch for changes, etc.
+  --proxy <string>,
+       -x <string>            forward dynamic requests to another server
 
-  -h, --help                      display this message
+  -d, --dev                   output source maps, watch for changes, etc.
+
+  -h, --help                  display this message
 
 `;
 
@@ -39,12 +45,14 @@ try {
     '--argument': [String],
     '--entry': String,
     '--port': Number,
+    '--proxy': String,
     '--help': Boolean,
     '-s': '--src',
     '-d': '--dev',
     '-a': '--argument',
     '-e': '--entry',
     '-p': '--port',
+    '-x': '--proxy',
     '-h': '--help',
   });
 
