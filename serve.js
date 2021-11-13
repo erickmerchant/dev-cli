@@ -27,13 +27,15 @@ export const serve = async (args) => {
 
   options.allowHTTP1 = true;
 
-  const server = createSecureServer(options);
+  const server = createSecureServer(options, changeMiddleware(args));
 
   const app = polka({server, onError});
 
-  app.use(compression());
+  app.use((req, res, next) => {
+    if (!res.headersSent) next();
+  });
 
-  app.use(changeMiddleware(args));
+  app.use(compression());
 
   app.use(fileMiddleware(args));
 
