@@ -52,9 +52,13 @@ export const serve = async (args) => {
           protocol: args['--proxy'].startsWith('https') ? 'https' : 'http',
           rejectUnauthorized: false,
           onRes: (req, res, proxyRes) => {
-            res.writeHead(proxyRes.statusCode, proxyRes.headers);
+            if (proxyRes.statusCode < 400) {
+              res.writeHead(proxyRes.statusCode, proxyRes.headers);
 
-            proxyRes.pipe(res);
+              proxyRes.pipe(res);
+            } else {
+              next();
+            }
           },
         },
         (err) => {
